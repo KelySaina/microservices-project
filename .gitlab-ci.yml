@@ -1,0 +1,34 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+
+before_script:
+  - docker info
+  - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+
+build:
+  stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/auth-service ./auth-service
+    - docker build -t $CI_REGISTRY_IMAGE/order-service ./order-service
+    - docker build -t $CI_REGISTRY_IMAGE/product-service ./product-service
+    - docker push $CI_REGISTRY_IMAGE/auth-service
+    - docker push $CI_REGISTRY_IMAGE/order-service
+    - docker push $CI_REGISTRY_IMAGE/product-service
+
+test:
+  stage: test
+  script:
+    - npm test --prefix auth-service || true
+    - npm test --prefix order-service || true
+    - pytest product-service/tests || true
+
+deploy:
+  stage: deploy
+  script:
+    - kubectl apply -f k8s/

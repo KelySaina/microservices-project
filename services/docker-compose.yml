@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  auth-service:
+    build: ./auth-service
+    networks:
+      - microservices-net
+
+  order-service:
+    build: ./order-service
+    networks:
+      - microservices-net
+
+  product-service:
+    build: ./product-service
+    networks:
+      - microservices-net
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "4000:4000"
+    depends_on:
+      - auth-service
+      - order-service
+      - product-service
+    networks:
+      - microservices-net
+    environment:
+      AUTH_SERVICE: "http://auth-service:4001/graphql"
+      ORDER_SERVICE: "http://order-service:4002/graphql"
+      PRODUCT_SERVICE: "http://product-service:4003/graphql"
+
+networks:
+  microservices-net:
+    driver: bridge
