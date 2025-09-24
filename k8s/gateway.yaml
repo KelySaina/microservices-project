@@ -13,14 +13,45 @@ spec:
       labels:
         app: gateway
     spec:
+      initContainers:
+        - name: wait-for-auth
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              until nslookup auth-service.microservices.svc.cluster.local; do
+                echo "Waiting for auth-service..."
+                sleep 2
+              done
+        - name: wait-for-order
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              until nslookup order-service.microservices.svc.cluster.local; do
+                echo "Waiting for order-service..."
+                sleep 2
+              done
+        - name: wait-for-product
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              until nslookup product-service.microservices.svc.cluster.local; do
+                echo "Waiting for product-service..."
+                sleep 2
+              done
       containers:
         - name: gateway
           image: ghcr.io/kelysaina/gateway:latest
-          imagePullPolicy: Always
           ports:
             - containerPort: 4000
       imagePullSecrets:
         - name: ghcr-secret
+
 ---
 apiVersion: v1
 kind: Service
