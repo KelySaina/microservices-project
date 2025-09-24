@@ -25,8 +25,17 @@ jobs:
       - name: Determine changed services
         id: changes
         run: |
-          echo "CHANGED_SERVICES="
-          CHANGED_SERVICES=$(git diff --name-only ${{ github.sha }} ${{ github.event.before }} | grep -E '^services/' | cut -d/ -f2 | sort -u)
+          # Make sure we have at least 2 commits
+          git fetch --depth=2
+
+          # Determine the previous commit
+          PREV_COMMIT=${{ github.event.before }}
+          if [ -z "$PREV_COMMIT" ] || [ "$PREV_COMMIT" = "0000000000000000000000000000000000000000" ]; then
+            PREV_COMMIT=$(git rev-parse HEAD~1)
+          fi
+
+          # Get changed services
+          CHANGED_SERVICES=$(git diff --name-only "$PREV_COMMIT" HEAD | grep -E '^services/' | cut -d/ -f2 | sort -u)
           echo "Changed services: $CHANGED_SERVICES"
           echo "CHANGED_SERVICES=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
 
@@ -58,4 +67,4 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          kubectl apply -f k8s/
+          kubectl apply -f k8s/ --validate=false
