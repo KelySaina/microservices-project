@@ -75,6 +75,13 @@ jobs:
       - name: Deploy Services
         run: kubectl apply -n microservices -f k8s/svcs/
 
+  gateway:
+    runs-on: self-hosted
+    needs: deploy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Deploy Gateway
         run: |
           kubectl apply -f k8s/gateway.yaml
