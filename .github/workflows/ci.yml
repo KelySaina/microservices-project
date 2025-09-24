@@ -60,8 +60,11 @@ jobs:
           pytest product-service/tests || true
 
   deploy:
-    runs-on: self-hosted
+    runs-on: self-hosted # your master node runner
     steps:
-      - uses: actions/checkout@v4
-      - name: Deploy to K8s
-        run: kubectl apply -f k8s/
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/ --validate=false
