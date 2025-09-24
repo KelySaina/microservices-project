@@ -65,6 +65,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy to Kubernetes
+      - name: Deploy Namespace
         run: |
-          kubectl apply -f k8s/ --validate=false
+          kubectl apply -f k8s/namespace.yaml
+          kubectl wait --for=condition=Established namespace/microservices --timeout=30s
+
+      - name: Deploy Services
+        run: kubectl apply -f k8s/
