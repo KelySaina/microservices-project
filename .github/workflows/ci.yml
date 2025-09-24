@@ -60,11 +60,14 @@ jobs:
           pytest product-service/tests || true
 
   deploy:
-    runs-on: self-hosted # your master node runner
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
 
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl apply -f k8s/ --validate=false
+    - name: Set up Kubeconfig
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+
+    - name: Deploy to Kubernetes
+      run: kubectl apply -f k8s/
