@@ -18,7 +18,7 @@ spec:
           image: ghcr.io/kelysaina/gateway:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 4003
+            - containerPort: 4000
       imagePullSecrets:
         - name: ghcr-secret
 ---
@@ -33,4 +33,5 @@ spec:
   ports:
     - port: 4000
       targetPort: 4000
+      nodePort: 30000
   type: NodePort
