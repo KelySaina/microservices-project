@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: auth-service
-          image: registry.gitlab.com/group/project/auth-service:latest
+          image: ghcr.io/KelySaina/microservices-project/auth-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 4001
 ---

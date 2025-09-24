@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: product-service
-          image: registry.gitlab.com/group/project/product-service:latest
+          image: ghcr.io/KelySaina/microservices-project/order-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 4003
 ---
