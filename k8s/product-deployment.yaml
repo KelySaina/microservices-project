@@ -19,6 +19,8 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 4003
+      imagePullSecrets:
+        - name: ghcr-secret
 ---
 apiVersion: v1
 kind: Service
