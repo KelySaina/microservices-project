@@ -67,8 +67,9 @@ jobs:
 
       - name: Deploy Namespace
         run: |
+          kubectl delete namespace microservices --grace-period=0 --force
           kubectl apply -f k8s/namespace.yaml
-          kubectl wait --for=condition=Established namespace/microservices --timeout=30s
+          kubectl get namespaces
 
       - name: Deploy Services
-        run: kubectl apply -f k8s/
+        run: kubectl apply -n microservices -f k8s/
