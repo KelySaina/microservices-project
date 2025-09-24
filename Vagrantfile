@@ -6,6 +6,8 @@ Vagrant.configure("2") do |config|
   config.vm.provider "virtualbox" do |vb|
     vb.memory = 2048
     vb.cpus = 2
+    # Boot timeout: wait up to 10 minutes for VM to start
+    vb.boot_timeout = 600
   end
 
   # Master node
