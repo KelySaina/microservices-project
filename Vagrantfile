@@ -1,13 +1,12 @@
 Vagrant.configure("2") do |config|
   # Box Ubuntu 20.04 (focal)
   config.vm.box = "ubuntu/focal64"
+  config.vm.boot_timeout = 600
 
   # Configuration commune à toutes les VM
   config.vm.provider "virtualbox" do |vb|
     vb.memory = 2048
     vb.cpus = 2
-    # Boot timeout: wait up to 10 minutes for VM to start
-    vb.boot_timeout = 600
   end
 
   # Master node
