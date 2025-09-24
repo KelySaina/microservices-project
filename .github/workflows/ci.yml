@@ -24,13 +24,13 @@ jobs:
 
       - name: Build and Push Images
         run: |
-          docker build -t $REGISTRY/$IMAGE_OWNER/auth-service:latest ./auth-service
+          docker build -t $REGISTRY/$IMAGE_OWNER/auth-service:latest ./services/auth-service
           docker push $REGISTRY/$IMAGE_OWNER/auth-service:latest
 
-          docker build -t $REGISTRY/$IMAGE_OWNER/order-service:latest ./order-service
+          docker build -t $REGISTRY/$IMAGE_OWNER/order-service:latest ./services/auth-service
           docker push $REGISTRY/$IMAGE_OWNER/order-service:latest
 
-          docker build -t $REGISTRY/$IMAGE_OWNER/product-service:latest ./product-service
+          docker build -t $REGISTRY/$IMAGE_OWNER/product-service:latest ./services/auth-service
           docker push $REGISTRY/$IMAGE_OWNER/product-service:latest
 
   test:
