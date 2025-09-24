@@ -11,7 +11,7 @@ const createRemoteExecutor =
     const query = print(document);
 
     let retries = 5;
-    let delay = 2000; // 2 seconds
+    let delay = 30000; // 2 seconds
     while (retries > 0) {
       try {
         const response = await fetch(url, {
