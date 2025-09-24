@@ -22,16 +22,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Images
+      - name: Determine changed services
+        id: changes
         run: |
-          docker build -t $REGISTRY/$IMAGE_OWNER/auth-service:latest ./services/auth-service
-          docker push $REGISTRY/$IMAGE_OWNER/auth-service:latest
+          echo "CHANGED_SERVICES="
+          CHANGED_SERVICES=$(git diff --name-only ${{ github.sha }} ${{ github.event.before }} | grep -E '^services/' | cut -d/ -f2 | sort -u)
+          echo "Changed services: $CHANGED_SERVICES"
+          echo "CHANGED_SERVICES=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
 
-          docker build -t $REGISTRY/$IMAGE_OWNER/order-service:latest ./services/auth-service
-          docker push $REGISTRY/$IMAGE_OWNER/order-service:latest
-
-          docker build -t $REGISTRY/$IMAGE_OWNER/product-service:latest ./services/auth-service
-          docker push $REGISTRY/$IMAGE_OWNER/product-service:latest
+      - name: Build and Push changed images
+        run: |
+          for service in ${{ steps.changes.outputs.CHANGED_SERVICES }}; do
+            echo "Building and pushing $service"
+            docker build -t $REGISTRY/$IMAGE_OWNER/$service:latest ./services/$service
+            docker push $REGISTRY/$IMAGE_OWNER/$service:latest
+          done
 
   test:
     runs-on: ubuntu-latest
