@@ -69,7 +69,6 @@ jobs:
 
       - name: Deploy Namespace
         run: |
-          kubectl delete namespace microservices --grace-period=0 --force
           kubectl apply -f k8s/namespace.yaml
           kubectl get namespaces
 
