@@ -31,6 +31,6 @@ spec:
   selector:
     app: gateway
   ports:
-    - port: 4003
-      targetPort: 4003
-  type: ClusterIP
+    - port: 4000
+      targetPort: 4000
+  type: NodePort
