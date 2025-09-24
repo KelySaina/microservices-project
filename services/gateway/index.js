@@ -50,7 +50,7 @@ async function startServer() {
   const server = new ApolloServer({ schema: gatewaySchema });
 
   server.listen({ port: 4000 }).then(({ url }) => {
-    console.log(`🚀 Gateway running at ${url}`);
+    console.log(`🚀 Gateway running at ${url}!!!`);
   });
 }
 
