@@ -22,23 +22,35 @@ async function startServer() {
   // Wrap remote schemas
   const authSchema = wrapSchema({
     schema: await introspectSchema(
-      createRemoteExecutor("http://auth-service:4001/graphql")
+      createRemoteExecutor(
+        "http://auth-service.microservices.svc.cluster.local:4001/graphql"
+      )
     ),
-    executor: createRemoteExecutor("http://auth-service:4001/graphql"),
+    executor: createRemoteExecutor(
+      "http://auth-service.microservices.svc.cluster.local:4001/graphql"
+    ),
   });
 
   const orderSchema = wrapSchema({
     schema: await introspectSchema(
-      createRemoteExecutor("http://order-service:4002/graphql")
+      createRemoteExecutor(
+        "http://order-service.microservices.svc.cluster.local:4002/graphql"
+      )
     ),
-    executor: createRemoteExecutor("http://order-service:4002/graphql"),
+    executor: createRemoteExecutor(
+      "http://order-service.microservices.svc.cluster.local:4002/graphql"
+    ),
   });
 
   const productSchema = wrapSchema({
     schema: await introspectSchema(
-      createRemoteExecutor("http://product-service:4003/graphql")
+      createRemoteExecutor(
+        "http://product-service.microservices.svc.cluster.local:4003/graphql"
+      )
     ),
-    executor: createRemoteExecutor("http://product-service:4003/graphql"),
+    executor: createRemoteExecutor(
+      "http://product-service.microservices.svc.cluster.local:4003/graphql"
+    ),
   });
 
   // Stitch all schemas together
