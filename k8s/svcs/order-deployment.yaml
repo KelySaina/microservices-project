@@ -32,5 +32,6 @@ spec:
     app: order-service
   ports:
     - port: 4002
-      targetPort: 4001
-  type: ClusterIP
+      targetPort: 4002
+      nodePort: 32002
+  type: NodePort

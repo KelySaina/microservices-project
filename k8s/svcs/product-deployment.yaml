@@ -33,4 +33,5 @@ spec:
   ports:
     - port: 4003
       targetPort: 4003
-  type: ClusterIP
+      nodePort: 32003
+  type: NodePort
