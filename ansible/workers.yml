@@ -1,0 +1,5 @@
+- hosts: workers
+  become: true
+  tasks:
+    - name: Join Kubernetes cluster
+      command: "{{ hostvars['192.168.56.10']['join_command'] }}"

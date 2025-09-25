@@ -1,0 +1,14 @@
+- hosts: master
+  become: true
+  tasks:
+    - name: Initialize Kubernetes master
+      command: kubeadm init --apiserver-advertise-address=192.168.56.10 --pod-network-cidr=10.244.0.0/16
+      args:
+        creates: /etc/kubernetes/admin.conf
+
+    - name: Copy kubeconfig for user
+      command: "{{ item }}"
+      with_items:
+        - mkdir -p /home/{{ ansible_user }}/.kube
+        - cp /etc/kubernetes/admin.conf /home/{{ ansible_user }}/.kube/config
+        - chown {{ ansible_user }}:{{ ansible_user }} /home/{{ ansible_user }}/.kube/config
