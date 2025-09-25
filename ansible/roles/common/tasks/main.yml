@@ -1,0 +1,90 @@
+---
+# Disable swap (Kubernetes requirement)
+- name: Disable swap
+  command: swapoff -a
+
+- name: Ensure swap is disabled permanently
+  replace:
+    path: /etc/fstab
+    regexp: '^(.+\sswap\s.+)$'
+    replace: '# \1'
+
+# Install dependencies
+
+- name: Add missing Kali repository GPG key
+  ansible.builtin.apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: ED65462EC8D5E4C5
+    state: present
+
+- name: Install required packages
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+    update_cache: true
+
+# Add Docker repository
+- name: Add Docker GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add Docker repo
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    state: present
+
+# Install container runtime (containerd)
+- name: Install containerd
+  apt:
+    name: containerd.io
+    state: present
+    update_cache: true
+
+- name: Configure containerd
+  command: containerd config default | tee /etc/containerd/config.toml
+  args:
+    creates: /etc/containerd/config.toml
+
+- name: Restart containerd
+  service:
+    name: containerd
+    state: restarted
+    enabled: true
+
+# Install Kubernetes tools
+- name: Add Kubernetes GPG key
+  apt_key:
+    url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
+    state: present
+
+- name: Add Kubernetes repo
+  apt_repository:
+    repo: deb https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /
+    state: present
+
+- name: Install kubelet, kubeadm, kubectl
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    update_cache: true
+
+- name: Hold kubelet kubeadm kubectl
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+    allow_downgrade: true
+    force: yes
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl

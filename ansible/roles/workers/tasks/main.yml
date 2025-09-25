@@ -1,0 +1,11 @@
+---
+- name: Copy join command from master
+  fetch:
+    src: /tmp/kubeadm_join.sh
+    dest: /tmp/
+    flat: yes
+
+- name: Run kubeadm join
+  command: sh /tmp/kubeadm_join.sh
+  args:
+    creates: /etc/kubernetes/kubelet.conf
