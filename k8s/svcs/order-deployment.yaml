@@ -18,7 +18,7 @@ spec:
           image: ghcr.io/kelysaina/order-service:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 4002
+            - containerPort: 4001
       imagePullSecrets:
         - name: ghcr-secret
 ---
@@ -32,5 +32,5 @@ spec:
     app: order-service
   ports:
     - port: 4002
-      targetPort: 4002
+      targetPort: 4001
   type: ClusterIP
