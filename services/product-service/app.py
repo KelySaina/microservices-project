@@ -14,7 +14,7 @@ query = QueryType()
 
 @query.field("products")
 def resolve_products(*_):
-    return ["Laptop", "Phone", "Tablet"]
+    return ["Laptop", "Phone", "Tablet", "Earphones"]
 
 schema = make_executable_schema(type_defs, query)
 

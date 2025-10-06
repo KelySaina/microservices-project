@@ -9,7 +9,7 @@ const schema = buildSchema(`
 `);
 
 const root = {
-  orders: () => ["Order-1", "Order-2", "Order-3"],
+  orders: () => ["Order-1", "Order-2", "Order-3","order-4"],
 };
 
 const app = express();
