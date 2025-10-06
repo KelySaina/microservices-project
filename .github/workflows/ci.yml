@@ -11,6 +11,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      changed_services: ${{ steps.changes.outputs.CHANGED_SERVICES }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -83,3 +86,10 @@ jobs:
 
       - name: Deploy Services
         run: kubectl apply -n microservices -f k8s/svcs/
+
+      - name: Rollout changed services
+        run: |
+          for service in ${{ needs.build.outputs.changed_services }}; do
+            echo "Restarting deployment for $service"
+            kubectl rollout restart deployment/$service -n microservices
+          done
