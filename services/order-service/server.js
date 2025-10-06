@@ -15,6 +15,4 @@ const root = {
 const app = express();
 app.use("/graphql", graphqlHTTP({ schema, rootValue: root, graphiql: true }));
 
-app.listen(4002, () => {
-  console.log("Order Service running on http://localhost:4002/graphql");
-});
+app.listen(4002, "0.0.0.0", () => console.log("Order Service running on 0.0.0.0:4002"));

@@ -15,6 +15,4 @@ const root = {
 const app = express();
 app.use("/graphql", graphqlHTTP({ schema, rootValue: root, graphiql: true }));
 
-app.listen(4001, () => {
-  console.log("Auth Service running on http://localhost:4001/graphql");
-});
+app.listen(4001, "0.0.0.0", () => console.log("Auth Service running on 0.0.0.0:4001"));
