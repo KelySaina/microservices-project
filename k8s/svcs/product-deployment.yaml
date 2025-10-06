@@ -31,7 +31,6 @@ spec:
   selector:
     app: product-service
   ports:
-    - port: 4003
+    - port: 4003        # ClusterIP port inside the cluster
       targetPort: 4003
-      nodePort: 32003
-  type: NodePort
+  type: ClusterIP       # Internal only

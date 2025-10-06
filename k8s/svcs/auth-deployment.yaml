@@ -31,7 +31,6 @@ spec:
   selector:
     app: auth-service
   ports:
-    - port: 4001
+    - port: 4001        # ClusterIP port inside cluster
       targetPort: 4001
-      nodePort: 32001
-  type: NodePort
+  type: ClusterIP       # Internal only

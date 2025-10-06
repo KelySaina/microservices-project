@@ -1,36 +1,41 @@
 Vagrant.configure("2") do |config|
-  # Box Ubuntu 20.04 (focal)
+  # Base Ubuntu 20.04 box
   config.vm.box = "ubuntu/focal64"
   config.vm.boot_timeout = 600
 
-  # Configuration commune à toutes les VM
+  # Common VirtualBox settings
   config.vm.provider "virtualbox" do |vb|
     vb.memory = 2048
     vb.cpus = 2
   end
 
-  # Master node
-  config.vm.define "k8s-master" do |master|
-    master.vm.hostname = "k8s-master"
-    master.vm.network "private_network", ip: "192.168.56.10"
-    master.vm.provision "shell", inline: <<-SHELL
+  # Cluster nodes IPs and hostnames
+  nodes = {
+    "k8s-master" => "192.168.56.10",
+    "k8s-worker1" => "192.168.56.20",
+    "k8s-worker2" => "192.168.56.21"
+  }
+
+  # Common provisioning shell for all nodes
+  def provision_node(ip, hostname, is_master, nodes)
+    <<-SHELL
+      # Update & install dependencies
       sudo apt-get update -y
       sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release software-properties-common
 
-      # Installer Docker (nécessaire à containerd)
+      # Docker & containerd
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
       sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
       sudo apt-get update -y
       sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 
-      # Config containerd
       sudo mkdir -p /etc/containerd
       sudo containerd config default | sudo tee /etc/containerd/config.toml
       sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
       sudo systemctl restart containerd
       sudo systemctl enable containerd
 
-      # Installer kubeadm, kubelet, kubectl
+      # Kubernetes repos
       sudo mkdir -p /etc/apt/keyrings
       curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
       echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
@@ -39,58 +44,53 @@ Vagrant.configure("2") do |config|
       sudo apt-get install -y kubelet kubeadm kubectl
       sudo apt-mark hold kubelet kubeadm kubectl
 
-      # Init cluster
-      sudo kubeadm init --apiserver-advertise-address=192.168.56.10 --pod-network-cidr=10.244.0.0/16
+      # Persistent sysctl for overlay networking
+      sudo modprobe br_netfilter
+      echo "br_netfilter" | sudo tee /etc/modules-load.d/br_netfilter.conf
 
-      # Config kubectl pour l’utilisateur vagrant
-      mkdir -p /home/vagrant/.kube
-      sudo cp -i /etc/kubernetes/admin.conf /home/vagrant/.kube/config
-      sudo chown vagrant:vagrant /home/vagrant/.kube/config
+      echo "net.bridge.bridge-nf-call-iptables = 1" | sudo tee /etc/sysctl.d/99-k8s.conf
+      echo "net.ipv4.ip_forward = 1" | sudo tee -a /etc/sysctl.d/99-k8s.conf
+      sudo sysctl --system
 
-      # Déployer Flannel CNI
-      sudo -u vagrant kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+      # Add /etc/hosts entries for all nodes
+      #{nodes.map { |n,h| "echo '#{h} #{n}' | sudo tee -a /etc/hosts" }.join("\n")}
 
-      # Sauvegarder la commande join
-      kubeadm token create --print-join-command > /vagrant/join.sh
+      if [ "#{is_master}" = "true" ]; then
+        # Initialize Kubernetes master
+        sudo kubeadm init --apiserver-advertise-address=#{ip} --pod-network-cidr=192.168.0.0/16
+
+        # Configure kubectl for vagrant user
+        mkdir -p /home/vagrant/.kube
+        sudo cp -i /etc/kubernetes/admin.conf /home/vagrant/.kube/config
+        sudo chown vagrant:vagrant /home/vagrant/.kube/config
+
+        # Deploy Calico CNI
+        sudo -u vagrant kubectl apply -f https://projectcalico.docs.tigera.io/manifests/calico.yaml
+
+        # Save join command
+        kubeadm token create --print-join-command > /vagrant/join.sh
+      else
+        # Wait until join.sh exists
+        while [ ! -f /vagrant/join.sh ]; do sleep 5; done
+        sudo bash /vagrant/join.sh
+      fi
+
     SHELL
   end
 
-  # Worker nodes
-  ["k8s-worker1", "k8s-worker2"].each_with_index do |name, i|
-    config.vm.define name do |worker|
-      worker.vm.hostname = name
-      worker.vm.network "private_network", ip: "192.168.56.#{20+i}"
+  # Define master
+  config.vm.define "k8s-master" do |master|
+    master.vm.hostname = "k8s-master"
+    master.vm.network "private_network", ip: nodes["k8s-master"]
+    master.vm.provision "shell", inline: provision_node(nodes["k8s-master"], "k8s-master", true, nodes)
+  end
 
-      worker.vm.provision "shell", inline: <<-SHELL
-        sudo apt-get update -y
-        sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release software-properties-common
-
-        # Installer Docker + containerd
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
-        sudo apt-get update -y
-        sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-
-        sudo mkdir -p /etc/containerd
-        sudo containerd config default | sudo tee /etc/containerd/config.toml
-        sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
-        sudo systemctl restart containerd
-        sudo systemctl enable containerd
-
-        # Installer kubeadm, kubelet, kubectl
-        sudo mkdir -p /etc/apt/keyrings
-        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-        echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-
-        sudo apt-get update -y
-        sudo apt-get install -y kubelet kubeadm kubectl
-        sudo apt-mark hold kubelet kubeadm kubectl
-
-        # Exécuter la commande join
-        if [ -f /vagrant/join.sh ]; then
-          sudo bash /vagrant/join.sh
-        fi
-      SHELL
+  # Define workers
+  ["k8s-worker1", "k8s-worker2"].each do |worker|
+    config.vm.define worker do |w|
+      w.vm.hostname = worker
+      w.vm.network "private_network", ip: nodes[worker]
+      w.vm.provision "shell", inline: provision_node(nodes[worker], worker, false, nodes)
     end
   end
 end
