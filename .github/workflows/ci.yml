@@ -35,17 +35,26 @@ jobs:
           fi
 
           # Get changed services
-          CHANGED_SERVICES=$(git diff --name-only "$PREV_COMMIT" HEAD | grep -E '^services/' | cut -d/ -f2 | sort -u)
+          CHANGED_SERVICES=$(git diff --name-only "$PREV_COMMIT" HEAD \
+            | grep -E '^services/' \
+            | cut -d/ -f2 \
+            | sort -u \
+            | tr '\n' ' ')
           echo "Changed services: $CHANGED_SERVICES"
           echo "CHANGED_SERVICES=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
 
+
       - name: Build and Push changed images
         run: |
-          for service in ${{ steps.changes.outputs.CHANGED_SERVICES }}; do
-            echo "Building and pushing $service"
-            docker build -t $REGISTRY/$IMAGE_OWNER/$service:latest ./services/$service
-            docker push $REGISTRY/$IMAGE_OWNER/$service:latest
-          done
+          if [ -z "${{ steps.changes.outputs.CHANGED_SERVICES }}" ]; then
+            echo "No services changed. Skipping build."
+          else
+            for service in ${{ steps.changes.outputs.CHANGED_SERVICES }}; do
+              echo "Building and pushing $service"
+              docker build -t $REGISTRY/$IMAGE_OWNER/$service:latest ./services/$service
+              docker push $REGISTRY/$IMAGE_OWNER/$service:latest
+            done
+          fi
 
   test:
     runs-on: ubuntu-latest
