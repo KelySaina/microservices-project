@@ -4,12 +4,14 @@ import { buildSchema } from "graphql";
 
 const schema = buildSchema(`
   type Query {
-    orders: [String]
+    orders: [String],
+    healthz: Striing
   }
 `);
 
 const root = {
   orders: () => ["Order-1", "Order-2", "Order-3"],
+  healthz: () => "Order server is healthy!!!"
 };
 
 const app = express();

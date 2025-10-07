@@ -6,7 +6,8 @@ app = Flask(__name__)
 
 type_defs = gql("""
     type Query {
-        products: [String]
+        products: [String],
+        healthz: String
     }
 """)
 
@@ -15,6 +16,10 @@ query = QueryType()
 @query.field("products")
 def resolve_products(*_):
     return ["Laptop", "Phone", "Tablet"]
+
+@query.field("healthz")
+def healthz(*_):
+    return "Product Service is healthy!!!"
 
 schema = make_executable_schema(type_defs, query)
 

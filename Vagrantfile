@@ -1,25 +1,16 @@
 Vagrant.configure("2") do |config|
-  # Base Ubuntu 20.04 box
   config.vm.box = "ubuntu/focal64"
   config.vm.boot_timeout = 600
 
-  # Common VirtualBox settings
-  config.vm.provider "virtualbox" do |vb|
-    vb.memory = 2048
-    vb.cpus = 2
-  end
-
-  # Cluster nodes IPs and hostnames
   nodes = {
-    "k8s-master" => "192.168.56.10",
+    "k8s-master"  => "192.168.56.10",
     "k8s-worker1" => "192.168.56.20",
-    "k8s-worker2" => "192.168.56.21"
+    "k8s-worker2" => "192.168.56.21",
+    "k8s-worker3" => "192.168.56.24"
   }
 
-  # Common provisioning shell for all nodes
   def provision_node(ip, hostname, is_master, nodes)
     <<-SHELL
-      # Update & install dependencies
       sudo apt-get update -y
       sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release software-properties-common
 
@@ -28,7 +19,6 @@ Vagrant.configure("2") do |config|
       sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
       sudo apt-get update -y
       sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-
       sudo mkdir -p /etc/containerd
       sudo containerd config default | sudo tee /etc/containerd/config.toml
       sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
@@ -39,58 +29,66 @@ Vagrant.configure("2") do |config|
       sudo mkdir -p /etc/apt/keyrings
       curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
       echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-
       sudo apt-get update -y
       sudo apt-get install -y kubelet kubeadm kubectl
       sudo apt-mark hold kubelet kubeadm kubectl
 
-      # Persistent sysctl for overlay networking
+      # Networking tweaks
       sudo modprobe br_netfilter
       echo "br_netfilter" | sudo tee /etc/modules-load.d/br_netfilter.conf
-
       echo "net.bridge.bridge-nf-call-iptables = 1" | sudo tee /etc/sysctl.d/99-k8s.conf
       echo "net.ipv4.ip_forward = 1" | sudo tee -a /etc/sysctl.d/99-k8s.conf
       sudo sysctl --system
 
-      # Add /etc/hosts entries for all nodes
-      #{nodes.map { |n,h| "echo '#{h} #{n}' | sudo tee -a /etc/hosts" }.join("\n")}
+      # /etc/hosts for all nodes
+      #{nodes.map { |n, h| "echo '#{h} #{n}' | sudo tee -a /etc/hosts" }.join("\n")}
 
       if [ "#{is_master}" = "true" ]; then
-        # Initialize Kubernetes master
         sudo kubeadm init --apiserver-advertise-address=#{ip} --pod-network-cidr=192.168.0.0/16
-
-        # Configure kubectl for vagrant user
         mkdir -p /home/vagrant/.kube
         sudo cp -i /etc/kubernetes/admin.conf /home/vagrant/.kube/config
         sudo chown vagrant:vagrant /home/vagrant/.kube/config
-
-        # Deploy Calico CNI
         sudo -u vagrant kubectl apply -f https://projectcalico.docs.tigera.io/manifests/calico.yaml
-
-        # Save join command
         kubeadm token create --print-join-command > /vagrant/join.sh
       else
-        # Wait until join.sh exists
         while [ ! -f /vagrant/join.sh ]; do sleep 5; done
         sudo bash /vagrant/join.sh
       fi
-
     SHELL
   end
 
-  # Define master
+  # Master node
   config.vm.define "k8s-master" do |master|
     master.vm.hostname = "k8s-master"
     master.vm.network "private_network", ip: nodes["k8s-master"]
+    master.vm.provider "virtualbox" do |vb|
+      vb.memory = 2048
+      vb.cpus = 2
+    end
     master.vm.provision "shell", inline: provision_node(nodes["k8s-master"], "k8s-master", true, nodes)
   end
 
-  # Define workers
+  # Worker1 & Worker2 (1GB each)
   ["k8s-worker1", "k8s-worker2"].each do |worker|
     config.vm.define worker do |w|
       w.vm.hostname = worker
       w.vm.network "private_network", ip: nodes[worker]
+      w.vm.provider "virtualbox" do |vb|
+        vb.memory = 1024
+        vb.cpus = 1
+      end
       w.vm.provision "shell", inline: provision_node(nodes[worker], worker, false, nodes)
     end
+  end
+
+  # Worker3 (monitoring node, 4GB)
+  config.vm.define "k8s-worker3" do |worker|
+    worker.vm.hostname = "k8s-worker3"
+    worker.vm.network "private_network", ip: nodes["k8s-worker3"]
+    worker.vm.provider "virtualbox" do |vb|
+      vb.memory = 4096
+      vb.cpus = 2
+    end
+    worker.vm.provision "shell", inline: provision_node(nodes["k8s-worker3"], "k8s-worker3", false, nodes)
   end
 end

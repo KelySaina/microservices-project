@@ -4,12 +4,12 @@ import { buildSchema } from "graphql";
 
 const schema = buildSchema(`
   type Query {
-    hello: String
+    healthz: String
   }
 `);
 
 const root = {
-  hello: () => "Hello from Auth Service changed!!!",
+  healthz: () => "Auth Service is healthy!!!",
 };
 
 const app = express();
