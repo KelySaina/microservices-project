@@ -9,7 +9,7 @@ const schema = buildSchema(`
 `);
 
 const root = {
-  hello: () => "Hello from Auth Service",
+  hello: () => "Hello from Auth Service changed!!!",
 };
 
 const app = express();
