@@ -6,8 +6,7 @@ app = Flask(__name__)
 
 type_defs = gql("""
     type Query {
-        products: [String],
-        healthz: String
+        products: [String]
     }
 """)
 
@@ -17,18 +16,14 @@ query = QueryType()
 def resolve_products(*_):
     return ["Laptop", "Phone", "Tablet"]
 
-@query.field("healthz")
-def healthz(*_):
-    return "Product Service is healthy!!!"
-
 schema = make_executable_schema(type_defs, query)
 
-# Endpoint GraphQL
+# GraphQL Playground
 @app.route("/graphql", methods=["GET"])
 def graphql_playground():
-    # Affiche l'interface GraphQL Playground dans le navigateur
     return PLAYGROUND_HTML, 200
 
+# GraphQL endpoint
 @app.route("/graphql", methods=["POST"])
 def graphql_server():
     data = request.get_json()
@@ -40,6 +35,11 @@ def graphql_server():
     )
     status_code = 200 if success else 400
     return jsonify(result), status_code
+
+# Health check endpoint
+@app.route("/healthz", methods=["GET"])
+def healthz():
+    return "Product Service is healthy!!!", 200
 
 if __name__ == "__main__":
     app.run(port=4003, host="0.0.0.0")
