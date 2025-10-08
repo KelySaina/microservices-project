@@ -1,17 +1,20 @@
 while true; do
-  echo "=== Health Check at $(date) ==="
+  echo "Request at $(date):"
 
-  echo "[Auth Service]"
-  curl -s -o - -w "\nHTTP Status: %{http_code}\n" http://myapp.local:30080/auth/healthz
-  echo "---------------------------"
+  curl -s -X POST http://myapp.local:30080/auth \
+       -H "Content-Type: application/json" \
+       -d '{"query":"{ healthz }"}'
+  echo -e "\n---------------------------\n"
 
-  echo "[Product Service]"
-  curl -s -o - -w "\nHTTP Status: %{http_code}\n" http://myapp.local:30080/products/healthz
-  echo "---------------------------"
+  curl -s -X POST http://myapp.local:30080/products \
+       -H "Content-Type: application/json" \
+       -d '{"query":"{ healthz }"}'
+  echo -e "\n---------------------------\n"
 
-  echo "[Order Service]"
-  curl -s -o - -w "\nHTTP Status: %{http_code}\n" http://myapp.local:30080/orders/healthz
-  echo "===========================\n"
+  curl -s -X POST http://myapp.local:30080/orders \
+       -H "Content-Type: application/json" \
+       -d '{"query":"{ healthz }"}'
+  echo -e "\n---------------------------\n"
 
   sleep 5
 done
