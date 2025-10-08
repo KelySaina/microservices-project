@@ -5,8 +5,7 @@ Vagrant.configure("2") do |config|
   nodes = {
     "k8s-master"  => "192.168.56.10",
     "k8s-worker1" => "192.168.56.20",
-    "k8s-worker2" => "192.168.56.21",
-    "k8s-worker3" => "192.168.56.24"
+    "k8s-worker2" => "192.168.56.21"
   }
 
   def provision_node(ip, hostname, is_master, nodes)
@@ -62,7 +61,7 @@ Vagrant.configure("2") do |config|
     master.vm.hostname = "k8s-master"
     master.vm.network "private_network", ip: nodes["k8s-master"]
     master.vm.provider "virtualbox" do |vb|
-      vb.memory = 2048
+      vb.memory = 4096
       vb.cpus = 2
     end
     master.vm.provision "shell", inline: provision_node(nodes["k8s-master"], "k8s-master", true, nodes)
@@ -74,21 +73,10 @@ Vagrant.configure("2") do |config|
       w.vm.hostname = worker
       w.vm.network "private_network", ip: nodes[worker]
       w.vm.provider "virtualbox" do |vb|
-        vb.memory = 1024
+        vb.memory = 2048
         vb.cpus = 1
       end
       w.vm.provision "shell", inline: provision_node(nodes[worker], worker, false, nodes)
     end
   end
-
-  # Worker3 (monitoring node, 4GB)
-  # config.vm.define "k8s-worker3" do |worker|
-  #   worker.vm.hostname = "k8s-worker3"
-  #   worker.vm.network "private_network", ip: nodes["k8s-worker3"]
-  #   worker.vm.provider "virtualbox" do |vb|
-  #     vb.memory = 4096
-  #     vb.cpus = 2
-  #   end
-  #   worker.vm.provision "shell", inline: provision_node(nodes["k8s-worker3"], "k8s-worker3", false, nodes)
-  # end
 end
