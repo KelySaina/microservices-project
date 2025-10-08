@@ -82,13 +82,13 @@ Vagrant.configure("2") do |config|
   end
 
   # Worker3 (monitoring node, 4GB)
-  config.vm.define "k8s-worker3" do |worker|
-    worker.vm.hostname = "k8s-worker3"
-    worker.vm.network "private_network", ip: nodes["k8s-worker3"]
-    worker.vm.provider "virtualbox" do |vb|
-      vb.memory = 4096
-      vb.cpus = 2
-    end
-    worker.vm.provision "shell", inline: provision_node(nodes["k8s-worker3"], "k8s-worker3", false, nodes)
-  end
+  # config.vm.define "k8s-worker3" do |worker|
+  #   worker.vm.hostname = "k8s-worker3"
+  #   worker.vm.network "private_network", ip: nodes["k8s-worker3"]
+  #   worker.vm.provider "virtualbox" do |vb|
+  #     vb.memory = 4096
+  #     vb.cpus = 2
+  #   end
+  #   worker.vm.provision "shell", inline: provision_node(nodes["k8s-worker3"], "k8s-worker3", false, nodes)
+  # end
 end

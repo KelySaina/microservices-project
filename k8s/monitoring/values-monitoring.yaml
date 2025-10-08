@@ -1,11 +1,10 @@
-# values-monitoring.yaml
 prometheus:
   nodeSelector:
     monitoring: enabled
   tolerations:
     - key: "monitoring"
       operator: "Equal"
-      value: "enabled"
+      value: "true"      # 👈 must match the taint
       effect: "NoSchedule"
 
 grafana:
@@ -14,5 +13,19 @@ grafana:
   tolerations:
     - key: "monitoring"
       operator: "Equal"
-      value: "enabled"
+      value: "true"      # 👈 same here
+      effect: "NoSchedule"
+
+prometheusOperator:
+  tolerations:
+    - key: "monitoring"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+
+alertmanager:
+  tolerations:
+    - key: "monitoring"
+      operator: "Equal"
+      value: "true"
       effect: "NoSchedule"
