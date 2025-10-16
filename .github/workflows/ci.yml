@@ -46,7 +46,6 @@ jobs:
           echo "Changed services: $CHANGED_SERVICES"
           echo "CHANGED_SERVICES=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
 
-
       - name: Build and Push changed images
         run: |
           if [ -z "${{ steps.changes.outputs.CHANGED_SERVICES }}" ]; then
@@ -86,6 +85,9 @@ jobs:
 
       - name: Deploy Services
         run: kubectl apply -n microservices -f k8s/svcs/
+
+      - name: Deploy HPAs
+        run: kubectl apply -n microservices -f k8s/hpas/
 
       - name: Rollout changed services
         run: |
