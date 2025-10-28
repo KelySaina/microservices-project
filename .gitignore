@@ -1,1 +1,13 @@
 .vagrant
+# Node modules
+node_modules/
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Optional: logs
+logs/
+*.log
+npm-debug.log*
