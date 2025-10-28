@@ -1,32 +1,15 @@
 from flask import Flask, request, jsonify
-from ariadne import QueryType, make_executable_schema, gql, graphql_sync
+from ariadne import graphql_sync, load_schema_from_path, make_executable_schema
 from ariadne.constants import PLAYGROUND_HTML
+from schema import schema
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 app = Flask(__name__)
 
-type_defs = gql("""
-    type Query {
-        products: [String],
-        healthz: String
-    }
-""")
-
-query = QueryType()
-
-@query.field("products")
-def resolve_products(*_):
-    return ["Laptop", "Phone", "Tablet"]
-
-@query.field("healthz")
-def healthz(*_):
-    return "Product Service is healthy!!!"
-
-schema = make_executable_schema(type_defs, query)
-
-# Endpoint GraphQL
 @app.route("/graphql", methods=["GET"])
 def graphql_playground():
-    # Affiche l'interface GraphQL Playground dans le navigateur
     return PLAYGROUND_HTML, 200
 
 @app.route("/graphql", methods=["POST"])
@@ -42,4 +25,5 @@ def graphql_server():
     return jsonify(result), status_code
 
 if __name__ == "__main__":
-    app.run(port=4003, host="0.0.0.0")
+    port = int(os.getenv("PORT", 4002))
+    app.run(host="0.0.0.0", port=port)
