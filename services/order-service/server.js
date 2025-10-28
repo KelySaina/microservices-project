@@ -18,5 +18,5 @@ app.use(
 
 const PORT = process.env.PORT || 4002;
 app.listen(PORT, () => {
-  console.log(`Order service running at{PORT}/graphql`);
+  console.log(`Order service running at ${PORT}/graphql`);
 });
