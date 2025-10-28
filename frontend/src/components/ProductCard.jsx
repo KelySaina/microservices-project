@@ -5,13 +5,6 @@ export default function ProductCard({ product, onAddToCart }) {
 
   return (
     <div className="bg-white shadow rounded-xl overflow-hidden hover:shadow-lg transition p-4 flex flex-col">
-      {product.image && (
-        <img
-          src={product.image}
-          alt={product.name}
-          className="h-40 w-full object-cover rounded-lg"
-        />
-      )}
       <div className="flex-1 mt-3">
         <h3 className="text-lg font-semibold text-gray-800">{product.name}</h3>
         <p className="text-gray-500 text-sm line-clamp-2">

@@ -10,14 +10,12 @@ export async function getAllProducts() {
         name
         description
         price
-        sku
-        image
-        createdAt
+        stock
       }
     }
   `;
   const data = await graphqlRequest(API_URLS.product, { query });
-  return data.products || [];
+  return data || [];
 }
 
 /* Public: single product */
@@ -31,7 +29,7 @@ export async function getProductById(id) {
   `;
   const variables = { id };
   const data = await graphqlRequest(API_URLS.product, { query, variables });
-  return data.product;
+  return data;
 }
 
 /* Admin: create product (requires auth) */
@@ -45,7 +43,7 @@ export async function createProduct(input) {
   `;
   const variables = { input };
   const data = await graphqlRequest(API_URLS.product, { query, variables });
-  return data.createProduct;
+  return data;
 }
 
 /* Admin: update product */
@@ -59,7 +57,7 @@ export async function updateProduct(id, input) {
   `;
   const variables = { id, input };
   const data = await graphqlRequest(API_URLS.product, { query, variables });
-  return data.updateProduct;
+  return data;
 }
 
 /* Admin: delete product */
@@ -71,5 +69,5 @@ export async function deleteProduct(id) {
   `;
   const variables = { id };
   const data = await graphqlRequest(API_URLS.product, { query, variables });
-  return data.deleteProduct;
+  return data;
 }

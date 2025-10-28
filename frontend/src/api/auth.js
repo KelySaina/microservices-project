@@ -11,33 +11,31 @@ import { setToken, setUser } from "../utils/auth";
 export async function login({ email, password }) {
   const query = `
     mutation Login($email: String!, $password: String!) {
-      login(email: $email, password: $password) {
-        token
-        user { id email role name }
-      }
+      login(email: $email, password: $password)
     }
   `;
+
   const variables = { email, password };
 
-  const data = await graphqlRequest(API_URLS.auth, { query, variables });
-  if (!data?.login) throw new Error("Invalid login response");
+  const token = await graphqlRequest(API_URLS.auth, { query, variables })
+    .then(data => data.login); // login returns the string token
 
-  const { token, user } = data.login;
+  if (!token) throw new Error("Invalid login response");
+
   setToken(token);
-  setUser(user);
-  return { token, user };
+  return { token };
 }
 
-export async function register({ name, email, password }) {
+
+export async function register({ username, email, password }) {
   const query = `
-    mutation Register($name: String!, $email: String!, $password: String!) {
-      register(input: { name: $name, email: $email, password: $password }) {
-        token
-        user { id email role name }
+    mutation Register($username: String!, $email: String!, $password: String!) {
+      register( username: $username, email: $email, password: $password ) {
+        id email role username
       }
     }
   `;
-  const variables = { name, email, password };
+  const variables = { username, email, password };
   const data = await graphqlRequest(API_URLS.auth, { query, variables });
   if (data?.register?.token) {
     setToken(data.register.token);
@@ -49,7 +47,7 @@ export async function register({ name, email, password }) {
 export async function me() {
   const query = `
     query {
-      me { id email name role }
+      me { id email username role }
     }
   `;
   const data = await graphqlRequest(API_URLS.auth, { query });

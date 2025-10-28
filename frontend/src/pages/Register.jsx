@@ -4,7 +4,7 @@ import { register } from "../api/auth";
 
 export default function Register() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ username: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -37,8 +37,8 @@ export default function Register() {
         <input
           type="text"
           placeholder="Name"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          value={form.username}
+          onChange={(e) => setForm({ ...form, username: e.target.value })}
           className="w-full mb-3 px-3 py-2 border rounded"
         />
         <input

@@ -8,18 +8,20 @@ export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
 
-    try {
-      const res = await login(form);
-      setToken(res.data.token);
-      navigate("/");
-    } catch (err) {
-      setError("Invalid credentials");
-    }
-  };
+  try {
+    const res = await login(form); // res = { token: "..." }
+    console.log("Login successful:", res);
+    navigate("/"); // no need to call setToken again
+  } catch (err) {
+    console.error("Login error:", err);
+    setError("Invalid credentials");
+  }
+};
+
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
