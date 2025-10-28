@@ -20,8 +20,7 @@ export async function getMyOrders() {
   const query = `
     query {
       myOrders {
-        id status total items { productId quantity price }
-        createdAt
+        id status items { product_id  quantity unit_price }
       }
     }
   `;

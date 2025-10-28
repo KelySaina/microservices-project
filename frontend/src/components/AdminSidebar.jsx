@@ -2,10 +2,10 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 
 const links = [
-  { to: "/admin", label: "Dashboard" },
-  { to: "/admin/products", label: "Products" },
-  { to: "/admin/orders", label: "Orders" },
-  { to: "/admin/users", label: "Users" },
+  { to: "/backoffice/dashboard", label: "Dashboard" },
+  { to: "/backoffice/products", label: "Products" },
+  { to: "/backoffice/orders", label: "Orders" },
+  { to: "/backoffice/users", label: "Users" },
 ];
 
 export default function AdminSidebar() {

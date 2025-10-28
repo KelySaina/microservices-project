@@ -8,11 +8,17 @@ import {
 
 export default function ProductManager() {
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ name: "", price: "", description: "" });
+  const [form, setForm] = useState({
+  name: "",
+  description: "",
+  price: "", // will convert to float
+  stock: "", // new
+});
+
 
   const fetchProducts = async () => {
     const res = await getAllProducts();
-    setProducts(res.data || []);
+    setProducts(res.products || []);
   };
 
   useEffect(() => {
@@ -21,10 +27,19 @@ export default function ProductManager() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    await createProduct(form);
-    setForm({ name: "", price: "", description: "" });
+
+    // Convert price to float and stock to integer
+    const input = {
+      ...form,
+      price: parseFloat(form.price),
+      stock: parseInt(form.stock, 10),
+    };
+
+    await createProduct(input);
+    setForm({ name: "", price: "", description: "", stock: "" });
     fetchProducts();
   };
+
 
   const handleDelete = async (id) => {
     await deleteProduct(id);
@@ -62,6 +77,14 @@ export default function ProductManager() {
             onChange={(e) => setForm({ ...form, description: e.target.value })}
             className="border px-3 py-2 rounded flex-1"
           />
+          <input
+            type="number"
+            placeholder="Stock"
+            value={form.stock}
+            onChange={(e) => setForm({ ...form, stock: e.target.value })}
+            className="border px-3 py-2 rounded w-1/4"
+          />
+
           <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
             Add
           </button>

@@ -11,7 +11,6 @@ export default function Home() {
       try {
         const res = await getAllProducts();
         setProducts(res.products || []);
-        console.log("Fetched products:", res)
       } catch (err) {
         console.error("Failed to fetch products:", err);
       } finally {

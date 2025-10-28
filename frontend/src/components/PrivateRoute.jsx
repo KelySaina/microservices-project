@@ -2,11 +2,7 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { isAuthenticated, getUser } from "../utils/auth";
 
-/**
- * Usage:
- * <PrivateRoute element={<AdminPage />} roles={['ADMIN']} />
- */
-export default function PrivateRoute({ element, roles }) {
+export default function PrivateRoute({ children, roles }) {
   const authed = isAuthenticated();
   const user = getUser();
 
@@ -18,5 +14,5 @@ export default function PrivateRoute({ element, roles }) {
     return <Navigate to="/" replace />;
   }
 
-  return element;
+  return children;
 }

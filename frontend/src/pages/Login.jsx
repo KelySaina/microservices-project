@@ -13,8 +13,8 @@ export default function Login() {
   setError("");
 
   try {
-    const res = await login(form); // res = { token: "..." }
-    console.log("Login successful:", res);
+    const res = await login(form);
+    setToken(res.token);
     navigate("/"); // no need to call setToken again
   } catch (err) {
     console.error("Login error:", err);

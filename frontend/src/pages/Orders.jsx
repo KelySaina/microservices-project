@@ -9,7 +9,7 @@ export default function Orders() {
     (async () => {
       try {
         const res = await getMyOrders();
-        setOrders(res.data || []);
+        setOrders(res || []);
       } catch (err) {
         console.error("Failed to fetch orders:", err);
       } finally {
