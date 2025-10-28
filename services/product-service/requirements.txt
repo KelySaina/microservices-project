@@ -1,5 +1,6 @@
 Flask==2.2.5
-ariadne==0.17.0
-graphql-core==3.2.3
-mysql-connector-python
-python-dotenv
+flask-cors==3.0.10           # for CORS support
+ariadne==0.17.0               # GraphQL schema & resolvers
+graphql-core==3.2.3           # GraphQL core engine
+mysql-connector-python==8.1.1 # MySQL database connector
+python-dotenv==1.0.0          # .env support
