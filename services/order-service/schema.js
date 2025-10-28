@@ -71,6 +71,16 @@ const RootQuery = new GraphQLObjectType({
         return rows;
       },
     },
+    orders: {
+      type: new GraphQLList(OrderType),
+      resolve: async (_, __, context) => {
+        if (!context.user) throw new Error("Unauthorized");
+        const [rows] = await pool.query("SELECT * FROM orders", [
+          context.user.id,
+        ]);
+        return rows;
+      },
+    },
     healthz: {
       type: GraphQLString,
       resolve: () => "Order Service is healthy",
