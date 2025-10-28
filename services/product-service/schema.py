@@ -48,7 +48,7 @@ def resolve_product(*_, id):
 
 @query.field("healthz")
 def resolve_healthz(*_):
-    return "Product Service is healthy"
+    return "Product Service is healthy!!!"
 
 # --- Mutations ---
 @mutation.field("addProduct")

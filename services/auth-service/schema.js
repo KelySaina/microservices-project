@@ -48,7 +48,7 @@ const RootQuery = new GraphQLObjectType({
     },
     healthz: {
       type: GraphQLString,
-      resolve: () => "Auth Service is healthy",
+      resolve: () => "Auth Service is healthy!!!",
     },
   },
 });
