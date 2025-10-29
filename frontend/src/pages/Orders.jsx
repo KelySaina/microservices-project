@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getMyOrders, createOrder } from "../api/order";
+import { getMyOrders } from "../api/order";
 import { useCart } from "../components/CartContext";
 
 export default function Orders() {
@@ -114,7 +114,7 @@ export default function Orders() {
                 <p>Status: {order.status}</p>
                 <p>
                   Date:{" "}
-                  {new Date(order.created_at || order.createdAt).toLocaleString()}
+                  {new Date(Number(order.created_at)).toLocaleString()}
                 </p>
                 {order.items && order.items.length > 0 && (
                   <ul className="mt-2 ml-4 list-disc">

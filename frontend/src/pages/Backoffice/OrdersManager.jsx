@@ -12,6 +12,7 @@ export default function OrdersManager() {
   };
 
   useEffect(() => {
+    console.log("Orders page")
     fetchOrders();
   }, []);
 

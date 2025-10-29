@@ -128,7 +128,7 @@ const OrderType = new GraphQLObjectType({
               }
             }
           `;
-          const response = await axios.post(process.env.ORDER_SERVICE_URL, {
+          const response = await axios.post(process.env.AUTH_SERVICE_URL, {
             query,
             variables: { id: parent.user_id },
           });

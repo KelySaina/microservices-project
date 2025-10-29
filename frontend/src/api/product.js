@@ -33,7 +33,7 @@ export async function getProductById(id) {
 }
 
 /* Admin: create product (requires auth) */
-export async function createProduct({ name, price, stock }) {
+export async function createProduct({ name, description, price, stock }) {
   const query = `
     mutation AddProduct($name: String!, $description: String!, $price: Float!, $stock: Int!) {
       addProduct(name: $name, description: $description, price: $price, stock: $stock) {
@@ -45,7 +45,7 @@ export async function createProduct({ name, price, stock }) {
       }
     }
   `;
-  const variables = { name, price, stock };
+  const variables = { name, description, price, stock };
   const data = await graphqlRequest(API_URLS.product, { query, variables });
   return data.addProduct;
 }

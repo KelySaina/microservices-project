@@ -13,14 +13,7 @@ spec:
       http:
         paths:
           # --- AUTH SERVICE ---
-          - path: /auth(/|$)(?!healthz)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: auth-service
-                port:
-                  number: 4001
-          - path: /auth/healthz
+          - path: /auth(/|$)
             pathType: ImplementationSpecific
             backend:
               service:
@@ -29,14 +22,7 @@ spec:
                   number: 4001
 
           # --- ORDER SERVICE ---
-          - path: /orders(/|$)(?!healthz)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: order-service
-                port:
-                  number: 4002
-          - path: /orders/healthz
+          - path: /orders(/|$)
             pathType: ImplementationSpecific
             backend:
               service:
@@ -45,14 +31,7 @@ spec:
                   number: 4002
 
           # --- PRODUCT SERVICE ---
-          - path: /products(/|$)(?!healthz)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: product-service
-                port:
-                  number: 4003
-          - path: /products/healthz
+          - path: /products(/|$)
             pathType: ImplementationSpecific
             backend:
               service:

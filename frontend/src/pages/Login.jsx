@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "../api/auth";
-import { setToken } from "../utils/auth";
+import { setToken, setUser } from "../utils/auth";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -15,7 +15,9 @@ export default function Login() {
   try {
     const res = await login(form);
     setToken(res.token.token);
-    navigate("/");
+    setUser(res.token.user);
+        navigate("/");
+
   } catch (err) {
     console.error("Login error:", err);
     setError("Invalid credentials");
