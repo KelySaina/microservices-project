@@ -25,19 +25,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Generate global version
+        id: version
+        run: |
+          VERSION="v-$((RANDOM%9000+1000))"
+          BUILD_DATE=$(date +%F)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "BUILD_DATE=$BUILD_DATE" >> $GITHUB_ENV
+          echo "Generated global version: $VERSION, build date: $BUILD_DATE"
+
       - name: Determine changed services
         id: changes
         run: |
-          # Make sure we have at least 2 commits
           git fetch --depth=2
 
-          # Determine the previous commit
           PREV_COMMIT=${{ github.event.before }}
           if [ -z "$PREV_COMMIT" ] || [ "$PREV_COMMIT" = "0000000000000000000000000000000000000000" ]; then
             PREV_COMMIT=$(git rev-parse HEAD~1)
           fi
 
-          # Get changed services
           CHANGED_SERVICES=$(git diff --name-only "$PREV_COMMIT" HEAD \
             | grep -E '^services/' \
             | cut -d/ -f2 \
@@ -53,7 +59,13 @@ jobs:
           else
             for service in ${{ steps.changes.outputs.CHANGED_SERVICES }}; do
               echo "Building and pushing $service"
-              docker build -t $REGISTRY/$IMAGE_OWNER/$service:latest ./services/$service
+
+              # Build with VERSION and BUILD_DATE as Docker build args
+              docker build \
+                --build-arg VERSION=$VERSION \
+                --build-arg BUILD_DATE=$BUILD_DATE \
+                -t $REGISTRY/$IMAGE_OWNER/$service:latest ./services/$service
+
               docker push $REGISTRY/$IMAGE_OWNER/$service:latest
             done
           fi

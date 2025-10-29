@@ -1,5 +1,16 @@
-const VERSION = `v-${Math.floor(1000 + Math.random() * 9000)}`;
-const BUILD_DATE = new Date().toISOString().split("T")[0]; // e.g. "2025-10-29"
+import fs from "fs";
+
+// Try reading version.json
+let VERSION = "v-unknown";
+let BUILD_DATE = new Date().toISOString().split("T")[0];
+
+try {
+  const data = JSON.parse(fs.readFileSync("/app/version.json", "utf-8"));
+  VERSION = data.version;
+  BUILD_DATE = data.date;
+} catch (err) {
+  console.warn("Could not read version.json, using defaults");
+}
 
 import {
   GraphQLObjectType,

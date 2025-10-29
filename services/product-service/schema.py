@@ -1,7 +1,13 @@
 from ariadne import QueryType, MutationType, make_executable_schema, gql
 from db import get_connection
-import random
-from datetime import date
+
+import json
+
+try:
+    with open("/app/version.json") as f:
+        VERSION_INFO = json.load(f)
+except FileNotFoundError:
+    VERSION_INFO = {"version": "v-unknown", "date": "unknown"}
 
 type_defs = gql("""
 type Product {
@@ -50,9 +56,7 @@ def resolve_product(*_, id):
 
 @query.field("healthz")
 def resolve_healthz(*_):
-    today = date.today().strftime("%Y-%m-%d")
-    rand_num = random.randint(1000, 9999)
-    return f"Product Service is healthy!!! {today} #{rand_num}"
+    return f"Product Service is healthy!!! {VERSION_INFO['date']} #{VERSION_INFO['version']}"
 
 # --- Mutations ---
 @mutation.field("addProduct")
