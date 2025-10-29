@@ -10,6 +10,12 @@ export default function PrivateRoute({ children, roles }) {
     return <Navigate to="/login" replace />;
   }
 
+  // Redirect admin to backoffice
+  if (user?.role === "admin") {
+    return <Navigate to="/backoffice/dashboard" replace />;
+  }
+
+  // Check allowed roles if specified
   if (roles && !roles.includes(user?.role)) {
     return <Navigate to="/" replace />;
   }

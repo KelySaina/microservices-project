@@ -80,24 +80,34 @@ const Mutation = new GraphQLObjectType({
       },
     },
     login: {
-      type: GraphQLString,
+      type: AuthPayloadType,
       args: {
         email: { type: GraphQLString },
         password: { type: GraphQLString },
       },
       resolve: async (_, { email, password }) => {
-        const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [
-          email,
-        ]);
+        const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
         const user = rows[0];
         if (!user) throw new Error("User not found");
+
         const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) throw new Error("Invalid password");
-        return jwt.sign(
+
+        const token = jwt.sign(
           { id: user.id, email: user.email, role: user.role },
           process.env.JWT_SECRET,
           { expiresIn: "24h" }
         );
+
+        return {
+          token,
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+          },
+        };
       },
     },
   },

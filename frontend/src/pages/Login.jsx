@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "../api/auth";
-import { setToken } from "../utils/auth";
+import { setToken, setUser, getUser } from "../utils/auth";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -15,7 +15,15 @@ export default function Login() {
   try {
     const res = await login(form);
     setToken(res.token);
-    navigate("/"); // no need to call setToken again
+    setUser(res.user);
+
+    const user = getUser();
+    console.log("Logged in user:", user);
+    if (user?.role === "admin") {
+      navigate("/backoffice/dashboard");
+    } else {
+    navigate("/");
+    }
   } catch (err) {
     console.error("Login error:", err);
     setError("Invalid credentials");
