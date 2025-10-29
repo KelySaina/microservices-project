@@ -31,8 +31,7 @@ export default function Orders() {
       alert(`Order #${order.id} created!`);
       setOrders((prev) => [order, ...prev]); // prepend new order
     } catch (err) {
-      console.error(err);
-      alert("Failed to create order");
+      alert("Failed to create order ", err);
     } finally {
       setCheckoutLoading(false);
     }

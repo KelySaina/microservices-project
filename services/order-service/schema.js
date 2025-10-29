@@ -244,6 +244,46 @@ const Mutation = new GraphQLObjectType({
         }
       },
     },
+    updateOrderStatus: {
+      type: OrderType,
+      args: {
+        orderId: { type: GraphQLID },
+        status: { type: GraphQLString },
+      },
+      resolve: async (_, { orderId, status }, context) => {
+        // 1. Authorization check
+        if (!context.user) throw new Error("Unauthorized");
+
+        // Optional: restrict only admins
+        if (context.user.role !== "admin") {
+          throw new Error("Forbidden: only admin can update order status");
+        }
+
+        // 2. Validate status
+        const validStatuses = ["pending", "paid", "shipped", "cancelled"];
+        if (!validStatuses.includes(status)) {
+          throw new Error(`Invalid status: ${status}`);
+        }
+
+        // 3. Update DB
+        const [result] = await pool.query(
+          "UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+          [status, orderId]
+        );
+
+        if (result.affectedRows === 0) {
+          throw new Error(`Order with ID ${orderId} not found`);
+        }
+
+        // 4. Return updated order
+        const [rows] = await pool.query("SELECT * FROM orders WHERE id = ?", [
+          orderId,
+        ]);
+
+        return rows[0];
+      },
+    },
+
   },
 });
 

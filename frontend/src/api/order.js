@@ -10,7 +10,7 @@ export async function createOrder(items) {
         id
         status
         total_amount
-        user { id name email }
+        user { id username email }
         items {
           id
           quantity
