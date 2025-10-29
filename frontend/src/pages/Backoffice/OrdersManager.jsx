@@ -41,7 +41,7 @@ export default function OrdersManager() {
             {orders.map((o) => (
               <tr key={o.id} className="border-t align-top">
                 <td className="p-2">{o.id}</td>
-                <td className="p-2">{o.user?.name} ({o.user?.email})</td>
+                <td className="p-2">{o.user?.username} ({o.user?.email})</td>
                 <td className="p-2">${o.total_amount?.toFixed(2)}</td>
                 <td className="p-2">{o.status}</td>
                 <td className="p-2">

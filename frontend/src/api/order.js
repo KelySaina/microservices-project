@@ -58,7 +58,7 @@ export async function getAllOrders() {
         id
         status
         total_amount
-        user { id name email }
+        user { id username email }
         items {
           id
           quantity
