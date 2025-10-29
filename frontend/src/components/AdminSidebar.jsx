@@ -5,7 +5,6 @@ const links = [
   { to: "/backoffice/dashboard", label: "Dashboard" },
   { to: "/backoffice/products", label: "Products" },
   { to: "/backoffice/orders", label: "Orders" },
-  { to: "/backoffice/users", label: "Users" },
 ];
 
 export default function AdminSidebar() {

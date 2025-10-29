@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getMyOrders } from "../api/order";
+import { getMyOrders, updateOrderStatus } from "../api/order";
 import { useCart } from "../components/CartContext";
 
 export default function Orders() {
@@ -29,13 +29,25 @@ export default function Orders() {
     try {
       const order = await checkout(); // calls CartContext.checkout
       alert(`Order #${order.id} created!`);
-      setOrders((prev) => [order, ...prev]); // prepend new order
+      setOrders((prev) => [order, ...prev]);
     } catch (err) {
       alert("Failed to create order ", err);
     } finally {
       setCheckoutLoading(false);
     }
   };
+
+  const handleStatusUpdate = async (id, status) => {
+    try {
+      const pay = await updateOrderStatus(id, status);
+      const res = await getMyOrders();
+        setOrders(res || []);
+      return pay
+    } catch (error) {
+      alert("Payment error ", error)
+
+    }
+  }
 
   if (loading)
     return <div className="text-center mt-10">Loading orders...</div>;
@@ -125,6 +137,18 @@ export default function Orders() {
                     ))}
                   </ul>
                 )}
+                <div className="grid grid-cols-2 gap-4">
+                {
+                  order.status === "pending" && (
+                    <button className="bg-blue-500 text-white py-1 px-2 rounded" onClick={() => handleStatusUpdate(order.id, "paid")}>Pay</button>
+                  )
+                }
+                {
+                  !["shipped", "cancelled"].includes(order.status) && (
+                    <button className="bg-red-500 text-white py-1 px-2 rounded" onClick={() => handleStatusUpdate(order.id, "cancelled")}>Cancel</button>
+                  )
+                }
+                </div>
               </li>
             ))}
           </ul>

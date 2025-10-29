@@ -254,11 +254,6 @@ const Mutation = new GraphQLObjectType({
         // 1. Authorization check
         if (!context.user) throw new Error("Unauthorized");
 
-        // Optional: restrict only admins
-        if (context.user.role !== "admin") {
-          throw new Error("Forbidden: only admin can update order status");
-        }
-
         // 2. Validate status
         const validStatuses = ["pending", "paid", "shipped", "cancelled"];
         if (!validStatuses.includes(status)) {

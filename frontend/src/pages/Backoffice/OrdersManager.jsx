@@ -56,13 +56,13 @@ export default function OrdersManager() {
                 </td>
                 <td className="p-2 space-x-2">
                   <button
-                    onClick={() => handleStatus(o.id, "SHIPPED")}
+                    onClick={() => handleStatus(o.id, "shipped")}
                     className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
                   >
                     Ship
                   </button>
                   <button
-                    onClick={() => handleStatus(o.id, "CANCELLED")}
+                    onClick={() => handleStatus(o.id, "cancelled")}
                     className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
                   >
                     Cancel
