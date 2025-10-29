@@ -1,16 +1,28 @@
 import { API_URLS } from "../utils/config";
 import { graphqlRequest } from "./graphqlClient";
 
-/* Create an order (requires Authorization header) */
-export async function createOrder({ productId, quantity }) {
+/* Create an order from cart items */
+export async function createOrder(items) {
+  // items = [{ product_id, quantity }]
   const query = `
-    mutation CreateOrder($productId: ID!, $quantity: Int!) {
-      createOrder(input: { productId: $productId, quantity: $quantity }) {
-        id status total createdAt
+    mutation CreateOrder($items: [OrderItemInput!]!) {
+      createOrder(items: $items) {
+        id
+        status
+        total_amount
+        user { id name email }
+        items {
+          id
+          quantity
+          unit_price
+          product { id name price description }
+        }
+        created_at
+        updated_at
       }
     }
   `;
-  const variables = { productId, quantity };
+  const variables = { items };
   const data = await graphqlRequest(API_URLS.order, { query, variables });
   return data.createOrder;
 }
@@ -20,7 +32,17 @@ export async function getMyOrders() {
   const query = `
     query {
       myOrders {
-        id status items { product_id  quantity unit_price }
+        id
+        status
+        total_amount
+        items {
+          id
+          quantity
+          unit_price
+          product { id name price description }
+        }
+        created_at
+        updated_at
       }
     }
   `;
@@ -33,9 +55,18 @@ export async function getAllOrders() {
   const query = `
     query {
       orders {
-        id user { id email }
-        status total items { productId quantity price }
-        createdAt
+        id
+        status
+        total_amount
+        user { id name email }
+        items {
+          id
+          quantity
+          unit_price
+          product { id name price }
+        }
+        created_at
+        updated_at
       }
     }
   `;
@@ -48,7 +79,8 @@ export async function updateOrderStatus(orderId, status) {
   const query = `
     mutation UpdateOrderStatus($orderId: ID!, $status: String!) {
       updateOrderStatus(orderId: $orderId, status: $status) {
-        id status
+        id
+        status
       }
     }
   `;

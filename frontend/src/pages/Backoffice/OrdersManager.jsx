@@ -7,7 +7,8 @@ export default function OrdersManager() {
 
   const fetchOrders = async () => {
     const res = await getAllOrders();
-    setOrders(res.data || []);
+    console.log("Fetched orders:", res);
+    setOrders(res || []);
   };
 
   useEffect(() => {
@@ -30,16 +31,29 @@ export default function OrdersManager() {
             <tr className="bg-gray-100">
               <th className="p-2 text-left">Order ID</th>
               <th className="p-2 text-left">Customer</th>
+              <th className="p-2 text-left">Total</th>
               <th className="p-2 text-left">Status</th>
+              <th className="p-2 text-left">Items</th>
               <th className="p-2 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {orders.map((o) => (
-              <tr key={o.id} className="border-t">
+              <tr key={o.id} className="border-t align-top">
                 <td className="p-2">{o.id}</td>
-                <td className="p-2">{o.user?.email}</td>
+                <td className="p-2">{o.user?.name} ({o.user?.email})</td>
+                <td className="p-2">${o.total_amount?.toFixed(2)}</td>
                 <td className="p-2">{o.status}</td>
+                <td className="p-2">
+                  <ul className="list-disc ml-4">
+                    {o.items.map((item) => (
+                      <li key={item.id}>
+                        {item.product?.name} x {item.quantity} ($
+                        {item.unit_price.toFixed(2)})
+                      </li>
+                    ))}
+                  </ul>
+                </td>
                 <td className="p-2 space-x-2">
                   <button
                     onClick={() => handleStatus(o.id, "SHIPPED")}

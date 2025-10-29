@@ -1,17 +1,4 @@
 import fs from "fs";
-
-// Try reading version.json
-let VERSION = "v-unknown";
-let BUILD_DATE = new Date().toISOString().split("T")[0];
-
-try {
-  const data = JSON.parse(fs.readFileSync("/app/version.json", "utf-8"));
-  VERSION = data.version;
-  BUILD_DATE = data.date;
-} catch (err) {
-  console.warn("Could not read version.json, using defaults");
-}
-
 import {
   GraphQLObjectType,
   GraphQLSchema,
@@ -27,12 +14,45 @@ import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 
+// --- Version info ---
+let VERSION = "v-unknown";
+let BUILD_DATE = new Date().toISOString().split("T")[0];
+try {
+  const data = JSON.parse(fs.readFileSync("/app/version.json", "utf-8"));
+  VERSION = data.version;
+  BUILD_DATE = data.date;
+} catch (err) {
+  console.warn("Could not read version.json, using defaults");
+}
+
 // --- Input type for order items ---
 const OrderItemInputType = new GraphQLInputObjectType({
   name: "OrderItemInput",
   fields: {
     product_id: { type: GraphQLID },
     quantity: { type: GraphQLInt },
+  },
+});
+
+// --- Product type (for resolver) ---
+const ProductType = new GraphQLObjectType({
+  name: "Product",
+  fields: {
+    id: { type: GraphQLID },
+    name: { type: GraphQLString },
+    description: { type: GraphQLString },
+    price: { type: GraphQLFloat },
+  },
+});
+
+// --- User type (for resolver) ---
+const UserType = new GraphQLObjectType({
+  name: "User",
+  fields: {
+    id: { type: GraphQLID },
+    name: { type: GraphQLString },
+    email: { type: GraphQLString },
+    role: { type: GraphQLString },
   },
 });
 
@@ -44,6 +64,32 @@ const OrderItemType = new GraphQLObjectType({
     product_id: { type: GraphQLID },
     quantity: { type: GraphQLInt },
     unit_price: { type: GraphQLFloat },
+    // resolve product info from product-service
+    product: {
+      type: ProductType,
+      resolve: async (parent) => {
+        try {
+          const query = `
+            query($id: ID!) {
+              product(id: $id) {
+                id
+                name
+                description
+                price
+              }
+            }
+          `;
+          const response = await axios.post(process.env.PRODUCT_SERVICE_URL, {
+            query,
+            variables: { id: parent.product_id },
+          });
+          return response.data.data.product;
+        } catch (err) {
+          console.error("Failed to fetch product:", err);
+          return null;
+        }
+      },
+    },
   }),
 });
 
@@ -67,6 +113,32 @@ const OrderType = new GraphQLObjectType({
     },
     created_at: { type: GraphQLString },
     updated_at: { type: GraphQLString },
+    // resolve user from auth-service
+    user: {
+      type: UserType,
+      resolve: async (parent) => {
+        try {
+          const query = `
+            query($id: ID!) {
+              user(id: $id) {
+                id
+                name
+                email
+                role
+              }
+            }
+          `;
+          const response = await axios.post(process.env.ORDER_SERVICE_URL, {
+            query,
+            variables: { id: parent.user_id },
+          });
+          return response.data.data.user;
+        } catch (err) {
+          console.error("Failed to fetch user:", err);
+          return null;
+        }
+      },
+    },
   }),
 });
 
@@ -89,9 +161,7 @@ const RootQuery = new GraphQLObjectType({
       type: new GraphQLList(OrderType),
       resolve: async (_, __, context) => {
         if (!context.user) throw new Error("Unauthorized");
-        const [rows] = await pool.query("SELECT * FROM orders", [
-          context.user.id,
-        ]);
+        const [rows] = await pool.query("SELECT * FROM orders");
         return rows;
       },
     },
@@ -100,7 +170,6 @@ const RootQuery = new GraphQLObjectType({
       resolve: () =>
         `Order Service is healthy! ${BUILD_DATE} #${VERSION}`,
     },
-
   },
 });
 
@@ -115,14 +184,13 @@ const Mutation = new GraphQLObjectType({
       },
       resolve: async (_, { items }, context) => {
         if (!context.user) throw new Error("Unauthorized");
-
         const conn = await pool.getConnection();
         let totalAmount = 0;
 
         try {
           await conn.beginTransaction();
 
-          // 1️⃣ Fetch product info from product-service
+          // fetch product info and calculate total
           for (const item of items) {
             const query = `
               query($id: ID!) {
@@ -137,27 +205,23 @@ const Mutation = new GraphQLObjectType({
               query,
               variables: { id: item.product_id },
             });
-
             const product = response.data.data.product;
-            if (!product)
-              throw new Error(`Product ${item.product_id} not found`);
+            if (!product) throw new Error(`Product ${item.product_id} not found`);
             if (product.stock < item.quantity)
-              throw new Error(
-                `Not enough stock for product ${item.product_id}`
-              );
+              throw new Error(`Not enough stock for product ${item.product_id}`);
 
             item.unit_price = product.price;
             totalAmount += product.price * item.quantity;
           }
 
-          // 2️⃣ Insert into orders
+          // insert order
           const [orderResult] = await conn.query(
             "INSERT INTO orders (user_id, total_amount) VALUES (?, ?)",
             [context.user.id, totalAmount]
           );
           const orderId = orderResult.insertId;
 
-          // 3️⃣ Insert order_items
+          // insert order_items
           for (const item of items) {
             await conn.query(
               "INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)",

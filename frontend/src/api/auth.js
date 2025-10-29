@@ -11,7 +11,10 @@ import { setToken, setUser } from "../utils/auth";
 export async function login({ email, password }) {
   const query = `
     mutation Login($email: String!, $password: String!) {
-      login(email: $email, password: $password)
+      login(email: $email, password: $password){
+        token,
+        user { id username email role }
+      }
     }
   `;
 

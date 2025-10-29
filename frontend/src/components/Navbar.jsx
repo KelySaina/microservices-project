@@ -17,17 +17,14 @@ export default function Navbar() {
         <Link to="/" className="text-lg font-bold text-blue-400">
           🛒 MyShop
         </Link>
-        <Link to="/products" className="hover:text-blue-300">
-          Products
-        </Link>
         {isAuthenticated() && (
           <Link to="/orders" className="hover:text-blue-300">
             My Orders
           </Link>
         )}
-        {user?.role === "ADMIN" && (
-          <Link to="/admin" className="hover:text-blue-300">
-            Backoffice
+        {user?.role === "admin" && (
+          <Link to="/backoffice/dashboard" className="hover:text-blue-300">
+            Admin Dashboard
           </Link>
         )}
       </div>
