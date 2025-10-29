@@ -116,13 +116,13 @@ const OrderType = new GraphQLObjectType({
     // resolve user from auth-service
     user: {
       type: UserType,
-      resolve: async (_, __, context) => {
+      resolve: async (parent) => {
         try {
           const query = `
             query($id: ID!) {
               user(id: $id) {
                 id
-                name
+                username
                 email
                 role
               }
@@ -130,7 +130,7 @@ const OrderType = new GraphQLObjectType({
           `;
           const response = await axios.post(process.env.AUTH_SERVICE_URL, {
             query,
-            variables: { id: context.user.id },
+            variables: { id: parent.user_id },
           });
           return response.data.data.user;
         } catch (err) {
