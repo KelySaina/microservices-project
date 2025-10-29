@@ -7,7 +7,6 @@ export default function OrdersManager() {
 
   const fetchOrders = async () => {
     const res = await getAllOrders();
-    console.log("Fetched orders:", res);
     setOrders(res || []);
   };
 
