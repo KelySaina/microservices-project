@@ -144,7 +144,7 @@ export default function Orders() {
                   )
                 }
                 {
-                  !["shipped", "cancelled"].includes(order.status) && (
+                  !["shipped", "cancelled", "paid"].includes(order.status) && (
                     <button className="bg-red-500 text-white py-1 px-2 rounded" onClick={() => handleStatusUpdate(order.id, "cancelled")}>Cancel</button>
                   )
                 }
