@@ -1,5 +1,7 @@
 from ariadne import QueryType, MutationType, make_executable_schema, gql
 from db import get_connection
+import random
+from datetime import date
 
 type_defs = gql("""
 type Product {
@@ -48,7 +50,9 @@ def resolve_product(*_, id):
 
 @query.field("healthz")
 def resolve_healthz(*_):
-    return "Product Service is healthy!!!"
+    today = date.today().strftime("%Y-%m-%d")
+    rand_num = random.randint(1000, 9999)
+    return f"Product Service is healthy!!! {today} #{rand_num}"
 
 # --- Mutations ---
 @mutation.field("addProduct")

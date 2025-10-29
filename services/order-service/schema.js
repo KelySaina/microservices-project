@@ -1,3 +1,6 @@
+const VERSION = `v-${Math.floor(1000 + Math.random() * 9000)}`;
+const BUILD_DATE = new Date().toISOString().split("T")[0]; // e.g. "2025-10-29"
+
 import {
   GraphQLObjectType,
   GraphQLSchema,
@@ -83,8 +86,10 @@ const RootQuery = new GraphQLObjectType({
     },
     healthz: {
       type: GraphQLString,
-      resolve: () => "Order Service is healthy!!!",
+      resolve: () =>
+        `Order Service is healthy!!! ${BUILD_DATE} #${VERSION}`,
     },
+
   },
 });
 

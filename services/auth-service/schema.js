@@ -1,4 +1,6 @@
 // schema.js
+const VERSION = `v-${Math.floor(1000 + Math.random() * 9000)}`;
+const BUILD_DATE = new Date().toISOString().split("T")[0]; // e.g. "2025-10-29"
 import {
   GraphQLObjectType,
   GraphQLSchema,
@@ -25,6 +27,14 @@ const UserType = new GraphQLObjectType({
   }),
 });
 
+const AuthPayloadType = new GraphQLObjectType({
+  name: "AuthPayload",
+  fields: () => ({
+    token: { type: GraphQLString },
+    user: { type: UserType },
+  }),
+});
+
 // Root Query
 const RootQuery = new GraphQLObjectType({
   name: "RootQueryType",
@@ -48,7 +58,8 @@ const RootQuery = new GraphQLObjectType({
     },
     healthz: {
       type: GraphQLString,
-      resolve: () => "Auth Service is healthy!!!",
+      resolve: () =>
+        `Auth Service is healthy!!! ${BUILD_DATE} #${VERSION}`,
     },
   },
 });
