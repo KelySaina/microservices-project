@@ -167,7 +167,7 @@ jobs:
 
             # wait for rollout to complete (deployment updated)
             if ! kubectl rollout status deployment/$service -n $NAMESPACE --timeout=300s; then
-              echo "❌ Rollout failed for $service. Rolling back..."
+              echo "❌ Rollout failed for $service. Rolling back to $PREV_IMAGE..."
               kubectl set image deployment/$service $service=$PREV_IMAGE -n $NAMESPACE --record
               PREV_VERSION=${PREV_IMAGE##*:}
               kubectl annotate deployment/$service version=$PREV_VERSION --overwrite -n $NAMESPACE
@@ -197,7 +197,7 @@ jobs:
                         echo "✅ Pods still ready after $INTERVAL seconds. Proceeding."
                         break
                     else
-                        echo "❌ Pods became not ready after waiting. Rolling back..."
+                        echo "❌ Pods became not ready after waiting. Rolling back to $PREV_IMAGE..."
                         kubectl set image deployment/$service $service=$PREV_IMAGE -n $NAMESPACE --record
                         PREV_VERSION=${PREV_IMAGE##*:}
                         kubectl annotate deployment/$service version=$PREV_VERSION --overwrite -n $NAMESPACE
