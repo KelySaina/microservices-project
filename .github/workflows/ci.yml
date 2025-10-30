@@ -158,7 +158,7 @@ jobs:
             echo "🚀 Rolling out $service..."
 
             # --- Step 1: Wait for rollout status ---
-            if ! kubectl rollout status deployment/$service -n $NAMESPACE --timeout=60s; then
+            if ! kubectl rollout status deployment/$service -n $NAMESPACE --timeout=120s; then
               echo "❌ Rollout failed for $service. Attempting smart rollback..."
 
               PREV_IMAGE=$(kubectl rollout history deployment/$service -n $NAMESPACE \
@@ -179,7 +179,7 @@ jobs:
             # --- Step 2: Double-check pods readiness ---
             echo "🩺 Verifying pod readiness for $service..."
             TIMEOUT=60
-            INTERVAL=20
+            INTERVAL=15
             ELAPSED=0
 
             while [ $ELAPSED -lt $TIMEOUT ]; do
