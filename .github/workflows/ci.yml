@@ -158,7 +158,7 @@ jobs:
             echo "🚀 Rolling out $service..."
 
             # --- Step 1: Wait for rollout status ---
-            if ! kubectl rollout status deployment/$service -n $NAMESPACE --timeout=240s; then
+            if ! kubectl rollout status deployment/$service -n $NAMESPACE --timeout=360s; then
               echo "❌ Rollout failed for $service. Attempting smart rollback..."
 
               # Get previous non-latest image from rollout history
