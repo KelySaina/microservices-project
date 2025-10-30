@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: product-service
-          image: ghcr.io/kelysaina/product-service:latest
+          image: ghcr.io/kelysaina/product-service:{{VERSION}}
           imagePullPolicy: Always
           ports:
             - containerPort: 4003

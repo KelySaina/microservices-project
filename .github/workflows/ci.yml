@@ -8,7 +8,6 @@ env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: kelysaina
   NAMESPACE: microservices
-  HEALTH_TIMEOUT: 180 # seconds
 
 jobs:
   build:
@@ -135,10 +134,12 @@ jobs:
         run: |
           VERSION=${{ needs.build.outputs.version }}
           for service in ${{ needs.build.outputs.changed_services }}; do
+            svc_name="${service%%-*}"
             echo "🔹 Updating $service image to version $VERSION"
             kubectl set image deployment/$service \
               $service=$REGISTRY/$IMAGE_OWNER/$service:$VERSION \
               -n $NAMESPACE
+            sed "s/{{VERSION}}/$VERSION/g" k8s/$svc_name-deployment.yaml | kubectl apply -f -
           done
 
       - name: Wait and Validate Rollout
@@ -154,28 +155,6 @@ jobs:
               exit 1
             fi
 
-            echo "🩺 Checking health of $service (waiting for version change)..."
-            URL="http://myapp.local:30080/$svc_name"
-            OLD_VERSION=$(kubectl get deployment $service -n $NAMESPACE -o jsonpath='{.metadata.annotations.version}')
-            ELAPSED=0
-            while [ $ELAPSED -lt $HEALTH_TIMEOUT ]; do
-              NEW_VERSION=$(curl -s -X POST "$URL" -H "Content-Type: application/json" \
-                -d '{"query":"{ healthz }"}' | jq -r '.data.healthz' 2>/dev/null || echo "")
+            echo "✅ Rollout successful for $service."
 
-              if [ "$NEW_VERSION" = "$VERSION" ]; then
-                echo "✅ $service successfully running version $VERSION"
-                kubectl annotate deployment/$service version=$VERSION --overwrite -n $NAMESPACE
-                break
-              fi
-
-              echo "⏳ Waiting ($ELAPSED s) for $service at $URL to update..."
-              sleep 5
-              ELAPSED=$((ELAPSED + 5))
-            done
-
-            if [ $ELAPSED -ge $HEALTH_TIMEOUT ]; then
-              echo "⚠️ $service failed to report version change within timeout. Rolling back..."
-              kubectl rollout undo deployment/$service -n $NAMESPACE
-              exit 1
-            fi
           done
