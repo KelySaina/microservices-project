@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: auth-service
-          image: ghcr.io/kelysaina/auth-service:{{VERSION}}
+          image: ghcr.io/kelysaina/auth-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 4001

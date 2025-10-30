@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: ghcr.io/kelysaina/order-service:{{VERSION}}
+          image: ghcr.io/kelysaina/order-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 4002
