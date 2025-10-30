@@ -211,7 +211,7 @@ jobs:
             done
 
             if [ $ELAPSED -ge $TIMEOUT ]; then
-                echo "⚠️ Timeout waiting for pods to be ready. Rolling back..."
+                echo "⚠️ Timeout waiting for pods to be ready. Rolling back to $PREV_IMAGE..."
                 kubectl set image deployment/$service $service=$PREV_IMAGE -n $NAMESPACE --record
                 PREV_VERSION=${PREV_IMAGE##*:}
                 kubectl annotate deployment/$service version=$PREV_VERSION --overwrite -n $NAMESPACE
