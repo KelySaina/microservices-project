@@ -168,7 +168,7 @@ const RootQuery = new GraphQLObjectType({
     healthz: {
       type: GraphQLString,
       resolve: () =>
-        `Order Service is healthy!! ${BUILD_DATE} #${VERSION}`,
+        `Order Service is healthy!!! ${BUILD_DATE} #${VERSION}`,
     },
   },
 });
