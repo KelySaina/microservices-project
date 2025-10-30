@@ -8,6 +8,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: kelysaina
   NAMESPACE: microservices
+  HEALTH_TIMEOUT: 180 # seconds
 
 jobs:
   build:
@@ -90,23 +91,22 @@ jobs:
       - name: Pull built images
         run: |
           for service in ${{ needs.build.outputs.changed_services }}; do
-            echo "Pulling image for $service:latest"
+            echo "Pulling image for $service:$VERSION"
+            docker pull $REGISTRY/$IMAGE_OWNER/$service:$VERSION || \
             docker pull $REGISTRY/$IMAGE_OWNER/$service:latest || true
           done
 
       - name: Run auth-service unit tests inside image
         run: |
-          docker run --rm $REGISTRY/$IMAGE_OWNER/auth-service:latest npm test || true
+          docker run --rm $REGISTRY/$IMAGE_OWNER/auth-service:$VERSION npm test || true
 
       - name: Run order-service unit tests inside image
         run: |
-          docker run --rm $REGISTRY/$IMAGE_OWNER/order-service:latest npm test || true
+          docker run --rm $REGISTRY/$IMAGE_OWNER/order-service:$VERSION npm test || true
 
       - name: Run product-service unit tests inside image
         run: |
-          docker run --rm $REGISTRY/$IMAGE_OWNER/product-service:latest pytest tests/ || true
-
-
+          docker run --rm $REGISTRY/$IMAGE_OWNER/product-service:$VERSION pytest tests/ || true
 
   deploy:
     runs-on: self-hosted
@@ -134,12 +134,12 @@ jobs:
         run: |
           VERSION=${{ needs.build.outputs.version }}
           for service in ${{ needs.build.outputs.changed_services }}; do
-            svc_name="${service%%-*}"
             echo "🔹 Updating $service image to version $VERSION"
+            # set image with annotation to track version for rollbacks
             kubectl set image deployment/$service \
               $service=$REGISTRY/$IMAGE_OWNER/$service:$VERSION \
-              -n $NAMESPACE
-            sed "s/{{VERSION}}/$VERSION/g" k8s/$svc_name-deployment.yaml | kubectl apply -f -
+              -n $NAMESPACE --record
+            kubectl annotate deployment/$service version=$VERSION --overwrite -n $NAMESPACE
           done
 
       - name: Wait and Validate Rollout
@@ -147,14 +147,15 @@ jobs:
           VERSION=${{ needs.build.outputs.version }}
 
           for service in ${{ needs.build.outputs.changed_services }}; do
-            svc_name="${service%%-*}"
             echo "🚀 Waiting for rollout of $service..."
             if ! kubectl rollout status deployment/$service -n $NAMESPACE --timeout=300s; then
               echo "❌ Rollout failed for $service. Rolling back..."
               kubectl rollout undo deployment/$service -n $NAMESPACE
+              # verify image after rollback
+              ROLLBACK_IMAGE=$(kubectl get deployment $service -n $NAMESPACE -o jsonpath='{.spec.template.spec.containers[0].image}')
+              echo "🔄 Rolled back to image: $ROLLBACK_IMAGE"
               exit 1
             fi
 
             echo "✅ Rollout successful for $service."
-
           done
