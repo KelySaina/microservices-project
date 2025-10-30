@@ -149,14 +149,19 @@ jobs:
           for service in ${{ needs.build.outputs.changed_services }}; do
             echo "🚀 Waiting for rollout of $service..."
             if ! kubectl rollout status deployment/$service -n $NAMESPACE --timeout=300s; then
-              echo "❌ Rollout failed for $service. Rolling back..."
+              echo "❌ Rollout failed for $service during rollout. Rolling back..."
 
               # get previous version from annotation
-              PREV_IMAGE=$(kubectl get deployment $service -n $NAMESPACE -o jsonpath='{.metadata.annotations.version}')
+              PREV_VERSION=$(kubectl get deployment $service -n $NAMESPACE -o jsonpath='{.metadata.annotations.version}')
+              if [ -z "$PREV_VERSION" ]; then
+                echo "⚠️ No previous version found in annotations. Using 'latest'"
+                PREV_VERSION="latest"
+              fi
+
+              PREV_IMAGE="$REGISTRY/$IMAGE_OWNER/$service:$PREV_VERSION"
               echo "🔄 Rolling back $service to previous image: $PREV_IMAGE"
-              kubectl set image deployment/$service \
-                $service=$PREV_IMAGE \
-                -n $NAMESPACE
+              kubectl set image deployment/$service $service=$PREV_IMAGE -n $NAMESPACE --record
+              kubectl annotate deployment/$service version=$PREV_VERSION --overwrite -n $NAMESPACE
 
               # verify rollback
               ROLLBACK_IMAGE=$(kubectl get deployment $service -n $NAMESPACE -o jsonpath='{.spec.template.spec.containers[0].image}')
@@ -164,5 +169,35 @@ jobs:
               exit 1
             fi
 
-            echo "✅ Rollout successful for $service."
+            # wait for all pods to be ready
+            echo "🩺 Checking all pods for $service are ready..."
+            TIMEOUT=120  # seconds
+            ELAPSED=0
+            INTERVAL=5
+
+            while true; do
+              NOT_READY=$(kubectl get pods -n $NAMESPACE -l app=$service \
+                -o jsonpath='{range .items[*]}{.metadata.name}{"="}{.status.containerStatuses[0].ready}{"\n"}{end}' \
+                | grep -v "true" || true)
+
+              if [ -z "$NOT_READY" ]; then
+                echo "✅ All pods for $service are ready."
+                break
+              fi
+
+              if [ $ELAPSED -ge $TIMEOUT ]; then
+                echo "⚠️ Timeout waiting for pods to be ready for $service. Rolling back..."
+                PREV_VERSION=$(kubectl get deployment $service -n $NAMESPACE -o jsonpath='{.metadata.annotations.version}')
+                PREV_IMAGE="$REGISTRY/$IMAGE_OWNER/$service:$PREV_VERSION"
+                kubectl set image deployment/$service $service=$PREV_IMAGE -n $NAMESPACE --record
+                kubectl annotate deployment/$service version=$PREV_VERSION --overwrite -n $NAMESPACE
+                exit 1
+              fi
+
+              echo "⏳ Waiting ($ELAPSED/$TIMEOUT s) for pods of $service to be ready..."
+              sleep $INTERVAL
+              ELAPSED=$((ELAPSED + INTERVAL))
+            done
+
+            echo "✅ Rollout successful for $service with all pods ready."
           done
