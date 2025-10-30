@@ -8,7 +8,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: kelysaina
   NAMESPACE: microservices
-  HEALTH_TIMEOUT: 120 # seconds
+  HEALTH_TIMEOUT: 180 # seconds
 
 jobs:
   build:
@@ -148,7 +148,7 @@ jobs:
           for service in ${{ needs.build.outputs.changed_services }}; do
             svc_name="${service%%-*}"
             echo "🚀 Waiting for rollout of $service..."
-            if ! kubectl rollout status deployment/$service -n $NAMESPACE --timeout=90s; then
+            if ! kubectl rollout status deployment/$service -n $NAMESPACE --timeout=300s; then
               echo "❌ Rollout failed for $service. Rolling back..."
               kubectl rollout undo deployment/$service -n $NAMESPACE
               exit 1
