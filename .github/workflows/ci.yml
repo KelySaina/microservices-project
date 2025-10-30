@@ -161,17 +161,20 @@ jobs:
             if ! kubectl rollout status deployment/$service -n $NAMESPACE --timeout=120s; then
               echo "❌ Rollout failed for $service. Attempting smart rollback..."
 
+              # Get previous non-latest image from rollout history
               PREV_IMAGE=$(kubectl rollout history deployment/$service -n $NAMESPACE \
-                | grep -v "latest" | tail -1 | awk '{print $5}')
-              PREV_REV=$(kubectl rollout history deployment/$service -n $NAMESPACE \
-                | grep -v "latest" | tail -1 | awk '{print $1}')
+                            | grep -v "latest" \
+                            | grep "$service=" \
+                            | tail -2 | head -1 \
+                            | sed -E "s/.*$service=([^ ]+).*/\1/")
 
               if [ -n "$PREV_IMAGE" ]; then
                 echo "🔄 Rolling back $service to previous non-latest image: $PREV_IMAGE"
-                kubectl rollout undo deployment/$service -n $NAMESPACE --to-revision=$PREV_REV
+                kubectl set image deployment/$service $service=$PREV_IMAGE -n $NAMESPACE --record
+                PREV_VERSION=${PREV_IMAGE##*:}
+                kubectl annotate deployment/$service version=$PREV_VERSION --overwrite -n $NAMESPACE
               else
-                echo "⚠️ No valid previous non-latest image found. Using default rollback..."
-                kubectl rollout undo deployment/$service -n $NAMESPACE
+                echo "⚠️ No valid previous non-latest image found. Cannot rollback properly!"
               fi
               exit 1
             fi
@@ -188,7 +191,7 @@ jobs:
                 | grep -v "true" || true)
 
               if [ -z "$NOT_READY" ]; then
-                echo "✅ All pods for $service are ready. Rechecking in $INTERVAL seconds..."
+                echo "✅ All pods ready. Rechecking in $INTERVAL seconds..."
                 sleep $INTERVAL
 
                 # Double-check
@@ -197,16 +200,19 @@ jobs:
                   | grep -v "true" || true)
 
                 if [ -z "$NOT_READY_AGAIN" ]; then
-                  echo "✅ Pods remained ready after $INTERVAL seconds. Deployment for $service confirmed healthy."
+                  echo "✅ Pods still ready. Deployment for $service healthy."
                   break
                 else
                   echo "❌ Pods became unready after recheck. Rolling back..."
                   PREV_IMAGE=$(kubectl rollout history deployment/$service -n $NAMESPACE \
-                    | grep -v "latest" | tail -1 | awk '{print $5}')
-                  PREV_REV=$(kubectl rollout history deployment/$service -n $NAMESPACE \
-                    | grep -v "latest" | tail -1 | awk '{print $1}')
+                                | grep -v "latest" \
+                                | grep "$service=" \
+                                | tail -2 | head -1 \
+                                | sed -E "s/.*$service=([^ ]+).*/\1/")
                   if [ -n "$PREV_IMAGE" ]; then
-                    kubectl rollout undo deployment/$service -n $NAMESPACE --to-revision=$PREV_REV
+                    kubectl set image deployment/$service $service=$PREV_IMAGE -n $NAMESPACE --record
+                    PREV_VERSION=${PREV_IMAGE##*:}
+                    kubectl annotate deployment/$service version=$PREV_VERSION --overwrite -n $NAMESPACE
                   fi
                   exit 1
                 fi
@@ -219,13 +225,16 @@ jobs:
 
             # --- Step 3: Timeout protection ---
             if [ $ELAPSED -ge $TIMEOUT ]; then
-              echo "⚠️ Timeout waiting for pods to become ready. Rolling back..."
+              echo "⚠️ Timeout waiting for pods. Rolling back..."
               PREV_IMAGE=$(kubectl rollout history deployment/$service -n $NAMESPACE \
-                | grep -v "latest" | tail -1 | awk '{print $5}')
-              PREV_REV=$(kubectl rollout history deployment/$service -n $NAMESPACE \
-                | grep -v "latest" | tail -1 | awk '{print $1}')
+                            | grep -v "latest" \
+                            | grep "$service=" \
+                            | tail -2 | head -1 \
+                            | sed -E "s/.*$service=([^ ]+).*/\1/")
               if [ -n "$PREV_IMAGE" ]; then
-                kubectl rollout undo deployment/$service -n $NAMESPACE --to-revision=$PREV_REV
+                kubectl set image deployment/$service $service=$PREV_IMAGE -n $NAMESPACE --record
+                PREV_VERSION=${PREV_IMAGE##*:}
+                kubectl annotate deployment/$service version=$PREV_VERSION --overwrite -n $NAMESPACE
               fi
               exit 1
             fi
