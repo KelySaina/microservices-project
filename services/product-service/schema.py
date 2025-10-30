@@ -56,7 +56,7 @@ def resolve_product(*_, id):
 
 @query.field("healthz")
 def resolve_healthz(*_):
-    return f"Product Service is healthy!! {VERSION_INFO['date']} #{VERSION_INFO['version']}"
+    return f"Product Service is healthy! {VERSION_INFO['date']} #{VERSION_INFO['version']}"
 
 # --- Mutations ---
 @mutation.field("addProduct")
