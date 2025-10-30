@@ -150,10 +150,17 @@ jobs:
             echo "🚀 Waiting for rollout of $service..."
             if ! kubectl rollout status deployment/$service -n $NAMESPACE --timeout=300s; then
               echo "❌ Rollout failed for $service. Rolling back..."
-              kubectl rollout undo deployment/$service -n $NAMESPACE
-              # verify image after rollback
+
+              # get previous version from annotation
+              PREV_IMAGE=$(kubectl get deployment $service -n $NAMESPACE -o jsonpath='{.metadata.annotations.version}')
+              echo "🔄 Rolling back $service to previous image: $PREV_IMAGE"
+              kubectl set image deployment/$service \
+                $service=$PREV_IMAGE \
+                -n $NAMESPACE
+
+              # verify rollback
               ROLLBACK_IMAGE=$(kubectl get deployment $service -n $NAMESPACE -o jsonpath='{.spec.template.spec.containers[0].image}')
-              echo "🔄 Rolled back to image: $ROLLBACK_IMAGE"
+              echo "✅ $service rolled back to image: $ROLLBACK_IMAGE"
               exit 1
             fi
 
