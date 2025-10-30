@@ -20,5 +20,5 @@ app.use(
 
 const PORT = process.env.PORT || 4001;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Auth service running at ${PORT}/graphql`);
+  console.log(`Auth service running on ${PORT}/graphql`);
 });
