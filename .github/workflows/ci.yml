@@ -146,6 +146,7 @@ jobs:
           VERSION=${{ needs.build.outputs.version }}
 
           for service in ${{ needs.build.outputs.changed_services }}; do
+            svc_name="${service%%-*}"
             echo "🚀 Waiting for rollout of $service..."
             if ! kubectl rollout status deployment/$service -n $NAMESPACE --timeout=90s; then
               echo "❌ Rollout failed for $service. Rolling back..."
@@ -154,7 +155,7 @@ jobs:
             fi
 
             echo "🩺 Checking health of $service (waiting for version change)..."
-            URL="http://$service.$NAMESPACE.svc.cluster.local:4000/graphql"
+            URL="http://myapp.local:30080/$svc_name"
             OLD_VERSION=$(kubectl get deployment $service -n $NAMESPACE -o jsonpath='{.metadata.annotations.version}')
             ELAPSED=0
             while [ $ELAPSED -lt $HEALTH_TIMEOUT ]; do
@@ -167,7 +168,7 @@ jobs:
                 break
               fi
 
-              echo "⏳ Waiting ($ELAPSED s) for $service to update..."
+              echo "⏳ Waiting ($ELAPSED s) for $service at $URL to update..."
               sleep 5
               ELAPSED=$((ELAPSED + 5))
             done
