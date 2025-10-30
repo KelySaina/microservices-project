@@ -177,29 +177,47 @@ jobs:
             echo "🩺 Checking all pods for $service are actually ready..."
             TIMEOUT=120
             ELAPSED=0
-            INTERVAL=25
-            while true; do
-              NOT_READY=$(kubectl get pods -n $NAMESPACE -l app=$service \
-                -o jsonpath='{range .items[*]}{.metadata.name}{"="}{.status.containerStatuses[0].ready}{"\n"}{end}' \
-                | grep -v "true" || true)
+            INTERVAL=20
 
-              if [ -z "$NOT_READY" ]; then
-                echo "✅ All pods for $service are ready."
-                break
-              fi
+            while [ $ELAPSED -lt $TIMEOUT ]; do
+                NOT_READY=$(kubectl get pods -n $NAMESPACE -l app=$service \
+                  -o jsonpath='{range .items[*]}{.metadata.name}{"="}{.status.containerStatuses[0].ready}{"\n"}{end}' \
+                  | grep -v "true" || true)
 
-              if [ $ELAPSED -ge $TIMEOUT ]; then
-                echo "⚠️ Timeout waiting for pods to be ready for $service. Rolling back..."
+                if [ -z "$NOT_READY" ]; then
+                    echo "✅ All pods for $service are ready. Double-checking in $INTERVAL seconds..."
+                    sleep $INTERVAL
+
+                    # double-check
+                    NOT_READY=$(kubectl get pods -n $NAMESPACE -l app=$service \
+                      -o jsonpath='{range .items[*]}{.metadata.name}{"="}{.status.containerStatuses[0].ready}{"\n"}{end}' \
+                      | grep -v "true" || true)
+
+                    if [ -z "$NOT_READY" ]; then
+                        echo "✅ Pods still ready after $INTERVAL seconds. Proceeding."
+                        break
+                    else
+                        echo "❌ Pods became not ready after waiting. Rolling back..."
+                        kubectl set image deployment/$service $service=$PREV_IMAGE -n $NAMESPACE --record
+                        PREV_VERSION=${PREV_IMAGE##*:}
+                        kubectl annotate deployment/$service version=$PREV_VERSION --overwrite -n $NAMESPACE
+                        exit 1
+                    fi
+                fi
+
+                echo "⏳ Pods not ready yet: $NOT_READY. Waiting $INTERVAL seconds..."
+                sleep $INTERVAL
+                ELAPSED=$((ELAPSED + INTERVAL))
+            done
+
+            if [ $ELAPSED -ge $TIMEOUT ]; then
+                echo "⚠️ Timeout waiting for pods to be ready. Rolling back..."
                 kubectl set image deployment/$service $service=$PREV_IMAGE -n $NAMESPACE --record
                 PREV_VERSION=${PREV_IMAGE##*:}
                 kubectl annotate deployment/$service version=$PREV_VERSION --overwrite -n $NAMESPACE
                 exit 1
-              fi
+            fi
 
-              echo "⏳ Pods not ready yet: $NOT_READY. Waiting ($ELAPSED/$TIMEOUT s)..."
-              sleep $INTERVAL
-              ELAPSED=$((ELAPSED + INTERVAL))
-            done
 
             echo "✅ Rollout fully successful for $service with all pods ready."
           done
