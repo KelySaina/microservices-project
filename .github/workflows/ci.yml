@@ -91,21 +91,21 @@ jobs:
       - name: Pull built images
         run: |
           for service in ${{ needs.build.outputs.changed_services }}; do
-            echo "Pulling image for $service:$VERSION"
-            docker pull $REGISTRY/$IMAGE_OWNER/$service:$VERSION || true
+            echo "Pulling image for $service:latest"
+            docker pull $REGISTRY/$IMAGE_OWNER/$service:latest || true
           done
 
       - name: Run auth-service unit tests inside image
         run: |
-          docker run --rm $REGISTRY/$IMAGE_OWNER/auth-service:$VERSION npm test || true
+          docker run --rm $REGISTRY/$IMAGE_OWNER/auth-service:latest npm test || true
 
       - name: Run order-service unit tests inside image
         run: |
-          docker run --rm $REGISTRY/$IMAGE_OWNER/order-service:$VERSION npm test || true
+          docker run --rm $REGISTRY/$IMAGE_OWNER/order-service:latest npm test || true
 
       - name: Run product-service unit tests inside image
         run: |
-          docker run --rm $REGISTRY/$IMAGE_OWNER/product-service:$VERSION pytest tests/ || true
+          docker run --rm $REGISTRY/$IMAGE_OWNER/product-service:latest pytest tests/ || true
 
 
 
