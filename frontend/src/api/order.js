@@ -15,7 +15,7 @@ export async function createOrder(items) {
           id
           quantity
           unit_price
-          product { id name price description }
+          product { id name price description stock }
         }
         created_at
         updated_at
@@ -63,7 +63,7 @@ export async function getAllOrders() {
           id
           quantity
           unit_price
-          product { id name price }
+          product { id name price stock }
         }
         created_at
         updated_at
@@ -74,7 +74,6 @@ export async function getAllOrders() {
   return data.orders || [];
 }
 
-/* Admin: update order status */
 export async function updateOrderStatus(orderId, status) {
   const query = `
     mutation UpdateOrderStatus($orderId: ID!, $status: String!) {
@@ -82,15 +81,19 @@ export async function updateOrderStatus(orderId, status) {
         id
         status
         items {
-          id
           quantity
-          unit_price
-          product { id name price }
+          product {
+            id
+            name
+            stock
+          }
         }
       }
     }
   `;
+
   const variables = { orderId, status };
+
   const data = await graphqlRequest(API_URLS.order, { query, variables });
   return data.updateOrderStatus;
 }

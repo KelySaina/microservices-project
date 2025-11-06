@@ -65,7 +65,7 @@ export default function ProductCard({ product, onAddToCart }) {
 
       <div className="mt-4 flex items-center justify-between">
         <span className="text-blue-600 font-bold">${product.price}</span>
-        {onAddToCart && (
+        {onAddToCart && product.stock > 0 && (
           <button
             onClick={() => onAddToCart(product)}
             className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded"

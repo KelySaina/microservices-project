@@ -2,6 +2,7 @@ import { useCart } from "../components/CartContext";
 import { useEffect, useState } from "react";
 import { getAllProducts } from "../api/product";
 import ProductCard from "../components/ProductCard";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -11,6 +12,7 @@ export default function Home() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const { addToCart, cart } = useCart();
+  const navigate = useNavigate();
 
   // Fetch all products
   useEffect(() => {
@@ -18,10 +20,8 @@ export default function Home() {
       try {
         const res = await getAllProducts();
         const all = res || [];
-        // Filter out products with 0 stock
-        const available = all.filter((p) => p.stock > 0);
-        setProducts(available);
-        setFilteredProducts(available);
+        setProducts(all);
+        setFilteredProducts(all);
       } catch (err) {
         console.error("Failed to fetch products:", err);
       } finally {
@@ -30,7 +30,7 @@ export default function Home() {
     })();
   }, []);
 
-  // Filter products by name and price range
+  // Filter logic
   useEffect(() => {
     let filtered = [...products];
 
@@ -39,11 +39,9 @@ export default function Home() {
         p.name.toLowerCase().includes(search.toLowerCase())
       );
     }
-
     if (minPrice !== "") {
       filtered = filtered.filter((p) => p.price >= parseFloat(minPrice));
     }
-
     if (maxPrice !== "") {
       filtered = filtered.filter((p) => p.price <= parseFloat(maxPrice));
     }
@@ -52,24 +50,64 @@ export default function Home() {
   }, [search, minPrice, maxPrice, products]);
 
   if (loading)
-    return <div className="text-center mt-10">Loading products...</div>;
+    return <div className="text-center mt-10 text-gray-500">Loading products...</div>;
+
+  const totalAmount = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   return (
     <div className="p-6">
-      {/* Cart Section */}
+      {/* 🛒 Enhanced Cart Section */}
       {cart.length > 0 && (
-        <div className="mb-6 bg-gray-100 p-4 rounded shadow">
-          <h2 className="font-semibold text-lg mb-2">Cart</h2>
-          <ul>
+        <div className="mb-8 bg-white shadow-lg rounded-xl border border-gray-100 p-5">
+          <h2 className="font-semibold text-lg mb-3 flex items-center gap-2">
+            🛍️ Your Cart
+          </h2>
+
+          <ul className="divide-y divide-gray-100">
             {cart.map((item) => (
-              <li key={item.id} className="flex justify-between mb-1">
-                <span>
-                  {item.name} × {item.quantity}
+              <li
+                key={item.id}
+                className="flex items-center justify-between py-3 hover:bg-gray-50 transition rounded-lg px-2"
+              >
+                <div className="flex items-center gap-3">
+                  {/* 🧃 Product image placeholder */}
+                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-sm font-bold">
+                    {item.name[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-800">
+                      {item.name} × {item.quantity}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      ${item.price.toFixed(2)} each
+                    </p>
+                  </div>
+                </div>
+                <span className="text-gray-700 font-semibold">
+                  ${(item.price * item.quantity).toFixed(2)}
                 </span>
-                <span>${(item.price * item.quantity).toFixed(2)}</span>
               </li>
             ))}
           </ul>
+
+          {/* 💰 Total and Checkout */}
+          <div className="flex items-center justify-between mt-5 border-t pt-4">
+            <div className="text-lg font-bold text-gray-800">
+              Total:{" "}
+              <span className="text-green-600">
+                ${totalAmount.toFixed(2)}
+              </span>
+            </div>
+            <button
+              onClick={() => navigate("/orders")}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium px-5 py-2.5 rounded-lg shadow"
+            >
+              Proceed to Checkout →
+            </button>
+          </div>
         </div>
       )}
 

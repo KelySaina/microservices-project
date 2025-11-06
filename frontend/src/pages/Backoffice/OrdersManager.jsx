@@ -2,16 +2,22 @@ import React, { useEffect, useState } from "react";
 import AdminSidebar from "../../components/AdminSidebar";
 import { getAllOrders, updateOrderStatus } from "../../api/order";
 
+const ORDERS_PER_PAGE = 10; // Adjust as needed
+
 export default function OrdersManager() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchOrders = async () => {
     const res = await getAllOrders();
-    setOrders(res || []);
-    setFilteredOrders(res || []);
+    const sortedOrders = (res || []).sort(
+      (a, b) => Number(b.created_at) - Number(a.created_at) // latest first
+    );
+    setOrders(sortedOrders);
+    setFilteredOrders(sortedOrders);
   };
 
   useEffect(() => {
@@ -32,7 +38,7 @@ export default function OrdersManager() {
       filtered = filtered.filter((o) => o.status === statusFilter);
     }
 
-    // Search by user name or email
+    // Search by user name
     if (searchQuery.trim() !== "") {
       filtered = filtered.filter((o) =>
         `${o.user?.username}`
@@ -42,7 +48,15 @@ export default function OrdersManager() {
     }
 
     setFilteredOrders(filtered);
+    setCurrentPage(1); // reset to first page on filter change
   }, [statusFilter, searchQuery, orders]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredOrders.length / ORDERS_PER_PAGE);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * ORDERS_PER_PAGE,
+    currentPage * ORDERS_PER_PAGE
+  );
 
   return (
     <div className="flex">
@@ -93,7 +107,7 @@ export default function OrdersManager() {
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map((o) => (
+            {paginatedOrders.map((o) => (
               <tr key={o.id} className="border-t align-top hover:bg-gray-50">
                 <td className="p-2 font-mono text-gray-700">{o.id}</td>
                 <td className="p-2">
@@ -151,6 +165,29 @@ export default function OrdersManager() {
 
         {filteredOrders.length === 0 && (
           <p className="text-gray-500 mt-6 text-center">No orders found.</p>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-6">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <span>
+              Page {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         )}
       </div>
     </div>
