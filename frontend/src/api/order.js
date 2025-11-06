@@ -39,7 +39,7 @@ export async function getMyOrders() {
           id
           quantity
           unit_price
-          product { id name price description }
+          product { id name price description stock }
         }
         created_at
         updated_at
@@ -81,6 +81,12 @@ export async function updateOrderStatus(orderId, status) {
       updateOrderStatus(orderId: $orderId, status: $status) {
         id
         status
+        items {
+          id
+          quantity
+          unit_price
+          product { id name price }
+        }
       }
     }
   `;

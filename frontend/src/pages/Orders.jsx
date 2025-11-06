@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { getMyOrders, updateOrderStatus } from "../api/order";
+import { updateProductStock } from "../api/product"; // ✅ Add this
 import { useCart } from "../components/CartContext";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const { cart, updateQuantity, removeFromCart, clearCart, checkout } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, checkout } =
+    useCart();
 
   // Fetch past orders
   useEffect(() => {
@@ -22,32 +24,55 @@ export default function Orders() {
     })();
   }, []);
 
+  // 🟢 Checkout: create order + update stock
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-
     setCheckoutLoading(true);
     try {
       const order = await checkout(); // calls CartContext.checkout
       alert(`Order #${order.id} created!`);
+
+      // ✅ Decrease stock for each product purchased
+      for (const item of cart) {
+        const newStock = Math.max(item.stock - item.quantity, 0);
+        await updateProductStock(item.id, newStock);
+      }
+
       setOrders((prev) => [order, ...prev]);
+      clearCart();
     } catch (err) {
-      alert("Failed to create order ", err);
+      console.error("Failed to create order:", err);
+      alert("Failed to create order");
     } finally {
       setCheckoutLoading(false);
     }
   };
 
+  // 🟠 Handle order status updates
   const handleStatusUpdate = async (id, status) => {
     try {
-      const pay = await updateOrderStatus(id, status);
-      const res = await getMyOrders();
-        setOrders(res || []);
-      return pay
-    } catch (error) {
-      alert("Payment error ", error)
+      const updatedOrder = await updateOrderStatus(id, status);
 
+      // ✅ If cancelling, restore stock
+      if (status === "cancelled" && updatedOrder.items) {
+        for (const item of updatedOrder.items) {
+          const product = item.product;
+          console.log("Restoring stock for product:", product);
+          if (!product) continue;
+          const restoredStock = product.stock + item.quantity;
+          await updateProductStock(product.id, restoredStock);
+        }
+      }
+
+      // ✅ Refresh orders
+      const res = await getMyOrders();
+      setOrders(res || []);
+      return updatedOrder;
+    } catch (error) {
+      console.error("Order status update failed:", error);
+      alert("Failed to update order status");
     }
-  }
+  };
 
   if (loading)
     return <div className="text-center mt-10">Loading orders...</div>;
@@ -130,24 +155,32 @@ export default function Orders() {
                 {order.items && order.items.length > 0 && (
                   <ul className="mt-2 ml-4 list-disc">
                     {order.items.map((item) => (
-                      <li key={item.product_id}>
-                        {item.product_id} x {item.quantity} ($
+                      <li key={item.id}>
+                        {item.product?.name} x {item.quantity} ($
                         {item.unit_price})
                       </li>
                     ))}
                   </ul>
                 )}
-                <div className="grid grid-cols-2 gap-4">
-                {
-                  order.status === "pending" && (
-                    <button className="bg-blue-500 text-white py-1 px-2 rounded" onClick={() => handleStatusUpdate(order.id, "paid")}>Pay</button>
-                  )
-                }
-                {
-                  !["shipped", "cancelled", "paid"].includes(order.status) && (
-                    <button className="bg-red-500 text-white py-1 px-2 rounded" onClick={() => handleStatusUpdate(order.id, "cancelled")}>Cancel</button>
-                  )
-                }
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  {order.status === "pending" && (
+                    <button
+                      className="bg-blue-500 text-white py-1 px-2 rounded"
+                      onClick={() => handleStatusUpdate(order.id, "paid")}
+                    >
+                      Pay
+                    </button>
+                  )}
+                  {!["shipped", "cancelled", "paid"].includes(order.status) && (
+                    <button
+                      className="bg-red-500 text-white py-1 px-2 rounded"
+                      onClick={() =>
+                        handleStatusUpdate(order.id, "cancelled")
+                      }
+                    >
+                      Cancel
+                    </button>
+                  )}
                 </div>
               </li>
             ))}

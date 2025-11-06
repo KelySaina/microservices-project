@@ -15,7 +15,7 @@ export async function getAllProducts() {
     }
   `;
   const data = await graphqlRequest(API_URLS.product, { query });
-  return data || [];
+  return data.products || [];
 }
 
 /* Public: single product */
@@ -23,19 +23,23 @@ export async function getProductById(id) {
   const query = `
     query GetProduct($id: ID!) {
       product(id: $id) {
-        id name description price sku image
+        id
+        name
+        description
+        price
+        stock
       }
     }
   `;
   const variables = { id };
   const data = await graphqlRequest(API_URLS.product, { query, variables });
-  return data;
+  return data.product;
 }
 
-/* Admin: create product (requires auth) */
+/* Admin: create product */
 export async function createProduct({ name, description, price, stock }) {
   const query = `
-    mutation AddProduct($name: String!, $description: String!, $price: Float!, $stock: Int!) {
+    mutation AddProduct($name: String!, $description: String, $price: Float!, $stock: Int) {
       addProduct(name: $name, description: $description, price: $price, stock: $stock) {
         id
         name
@@ -50,28 +54,25 @@ export async function createProduct({ name, description, price, stock }) {
   return data.addProduct;
 }
 
-/* Admin: update product */
-export async function updateProduct(id, input) {
+/* Admin: update stock only */
+export async function updateProductStock(id, stock) {
   const query = `
-    mutation UpdateProduct($id: ID!, $input: UpdateProductInput!) {
-      updateProduct(id: $id, input: $input) {
-        id name price
+    mutation UpdateStock($id: ID!, $stock: Int!) {
+      updateStock(id: $id, stock: $stock) {
+        id
+        name
+        description
+        price
+        stock
       }
     }
   `;
-  const variables = { id, input };
+  const variables = { id, stock };
   const data = await graphqlRequest(API_URLS.product, { query, variables });
-  return data;
+  return data.updateStock;
 }
 
-/* Admin: delete product */
+/* Admin: "delete" = set stock to 0 */
 export async function deleteProduct(id) {
-  const query = `
-    mutation DeleteProduct($id: ID!) {
-      deleteProduct(id: $id) { success message }
-    }
-  `;
-  const variables = { id };
-  const data = await graphqlRequest(API_URLS.product, { query, variables });
-  return data;
+  return updateProductStock(id, 0);
 }

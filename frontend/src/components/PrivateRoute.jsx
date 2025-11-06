@@ -2,7 +2,7 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { isAuthenticated, getUser } from "../utils/auth";
 
-export default function PrivateRoute({ children, roles }) {
+export default function PrivateRoute({ children, role }) {
   const authed = isAuthenticated();
   const user = getUser();
 
@@ -10,11 +10,9 @@ export default function PrivateRoute({ children, roles }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (roles) {
-    // Check allowed roles if specified
-    if (roles && !roles.includes(user?.role)) {
-      return <Navigate to="/" replace />;
-    }
+  // Role-based access control
+  if (role && user?.role !== role) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
