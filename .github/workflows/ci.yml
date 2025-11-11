@@ -108,7 +108,7 @@ jobs:
             echo "🚀 Launching $service in test mode"
             docker run -d \
               --name "$service-test" \
-              --network svc-db_default \
+              --network lamp-network \
               -e NODE_ENV=test \
               -e DB_HOST=svc-db \
               -e DB_USER=test \
@@ -159,7 +159,7 @@ jobs:
             case "$service" in
               auth-service|order-service)
                 docker run --rm \
-                  --network svc-db_default \
+                  --network lamp-network \
                   -e NODE_ENV=test \
                   -e DB_HOST=svc-db \
                   -e DB_USER=test \
@@ -169,7 +169,7 @@ jobs:
                 ;;
               product-service)
                 docker run --rm \
-                  --network svc-db_default \
+                  --network lamp-network \
                   -e NODE_ENV=test \
                   -e DB_HOST=svc-db \
                   -e DB_USER=test \
