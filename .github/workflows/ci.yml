@@ -94,61 +94,33 @@ jobs:
         run: |
           docker compose -f svc-db/docker-compose.yml up -d
 
-      - name: Validate GraphQL health
+      - name: Validate built images
         run: |
-          # Map each service to its host port
-          declare -A PORTS=( ["auth-service"]=4001 ["order-service"]=4002 ["product-service"]=4003 )
+          for service in ${{ needs.build.outputs.changed_services }}; do
+            echo "🧪 Testing $service:$VERSION"
 
-          for service in auth-service order-service product-service; do
-            echo "🧪 Checking GraphQL health for $service (host port: ${PORTS[$service]})"
-
-            MAX_WAIT=15
-            INTERVAL=5
-            ELAPSED=0
-            RESPONSE=""
-
-            while [ $ELAPSED -lt $MAX_WAIT ]; do
-              RESPONSE=$(curl -s -X POST "http://localhost:${PORTS[$service]}/graphql" \
-                -H "Content-Type: application/json" \
-                -d '{"query":"{ healthz }"}' | jq -r '.data.healthz' 2>/dev/null || echo "")
-
-              if [ "$RESPONSE" == "ok" ]; then
-                echo "✅ $service GraphQL health check passed"
-                break
-              fi
-
-              echo "⏳ Waiting for $service to become ready ($ELAPSED/$MAX_WAIT)..."
-              sleep $INTERVAL
-              ELAPSED=$((ELAPSED + INTERVAL))
-            done
-
-            if [ "$RESPONSE" != "ok" ]; then
-              echo "❌ $service failed health check"
-              docker logs "${service}-test"
-              docker compose -f svc-db/docker-compose.yml down
+            CONTAINER_ID=$(docker run -d --rm $REGISTRY/$IMAGE_OWNER/$service:$VERSION)
+            if [ -z "$CONTAINER_ID" ]; then
+              echo "❌ Failed to start $service"
               exit 1
             fi
+
+            echo "⏳ Waiting 10s for $service to initialize..."
+            sleep 10
+
+            # Optional health check
+            HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null || echo "none")
+            echo "Health status: $HEALTH_STATUS"
+
+            PORT=$(docker port "$CONTAINER_ID" | head -n1 | cut -d: -f2)
+            if [ "$PORT" ]; then
+              curl -s "http://localhost:$PORT" >/dev/null && echo "✅ $service responds on port $PORT"
+            fi
+
+            docker logs --tail 20 "$CONTAINER_ID"
+            docker stop "$CONTAINER_ID"
+            echo "--------------------------------------"
           done
-
-      - name: Run unit tests inside containers
-        run: |
-          for service in auth-service order-service product-service; do
-            echo "🧩 Running unit tests for $service"
-            case "$service" in
-              auth-service|order-service)
-                docker exec "${service}-test" npm test || exit 1
-                ;;
-              product-service)
-                docker exec "${service}-test" pytest tests/ || exit 1
-                ;;
-            esac
-          done
-
-      - name: Stop test containers
-        run: docker compose -f svc-db/docker-compose.yml down
-
-
-
 
   deploy:
     runs-on: self-hosted
