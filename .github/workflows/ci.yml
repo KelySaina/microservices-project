@@ -106,21 +106,14 @@ jobs:
             INTERVAL=5
             ELAPSED=0
             RESPONSE=""
+            RESPONSE=$(curl -s -X POST "http://localhost:${PORTS[$service]}/graphql" \
+              -H "Content-Type: application/json" \
+              -d '{"query":"{ healthz }"}' | jq -r '.data.healthz' 2>/dev/null || echo "")
 
-            while [ $ELAPSED -lt $MAX_WAIT ]; do
-              RESPONSE=$(curl -s -X POST "http://localhost:${PORTS[$service]}/graphql" \
-                -H "Content-Type: application/json" \
-                -d '{"query":"{ healthz }"}' | jq -r '.data.healthz' 2>/dev/null || echo "")
-
-              if [ "$RESPONSE" == "ok" ]; then
-                echo "✅ $service GraphQL health check passed"
-                break
-              fi
-
-              echo "⏳ Waiting for $service to become ready ($ELAPSED/$MAX_WAIT)..."
-              sleep $INTERVAL
-              ELAPSED=$((ELAPSED + INTERVAL))
-            done
+            if [ "$RESPONSE" == "ok" ]; then
+              echo "✅ $service GraphQL health check passed"
+              break
+            fi
 
             if [ "$RESPONSE" != "ok" ]; then
               echo "❌ $service failed health check"
