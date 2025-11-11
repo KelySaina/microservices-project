@@ -102,22 +102,6 @@ jobs:
         run: |
           docker compose -f svc-db/docker-compose.yml up -d
 
-      - name: Launch changed services in test mode
-        run: |
-          for service in ${{ needs.build.outputs.changed_services }}; do
-            echo "🚀 Launching $service in test mode"
-            docker run -d \
-              --name "$service-test" \
-              --network lamp-network \
-              -e NODE_ENV=test \
-              -e DB_HOST=svc-db \
-              -e DB_USER=test \
-              -e DB_PASSWORD=test \
-              -e DB_NAME=testdb \
-              -p 0:4000 \
-              $REGISTRY/$IMAGE_OWNER/$service:$VERSION
-          done
-
       - name: Validate GraphQL health
         run: |
           for service in ${{ needs.build.outputs.changed_services }}; do

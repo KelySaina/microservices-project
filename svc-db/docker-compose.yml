@@ -7,29 +7,62 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: mydatabase
-      MYSQL_USER: user
-      MYSQL_PASSWORD: userpassword
-    volumes:
-      - ./mysql_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 5s
+      retries: 10
     networks:
       - lamp-network
 
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:latest
-    container_name: phpmyadmin
-    restart: always
+  # Example: auth-service (repeat similarly for other services)
+  auth-service:
+    image: ghcr.io/kelysaina/auth-service:${VERSION}
     environment:
-      PMA_HOST: db
-      PMA_USER: root
-      PMA_PASSWORD: rootpassword
-      UPLOAD_LIMIT: 100M
-    ports:
-      - "8080:80"
+      NODE_ENV: test
+      DB_HOST: db
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_NAME: testdb
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    ports:
+      - "4001:4001"
+    networks:
+      - lamp-network
+
+  order-service:
+    image: ghcr.io/kelysaina/order-service:${VERSION}
+    environment:
+      NODE_ENV: test
+      DB_HOST: db
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_NAME: testdb
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "4002:4002"
+    networks:
+      - lamp-network
+
+  product-service:
+    image: ghcr.io/kelysaina/product-service:${VERSION}
+    environment:
+      NODE_ENV: test
+      DB_HOST: db
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_NAME: testdb
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "4003:4003"
     networks:
       - lamp-network
 
