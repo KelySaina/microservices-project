@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { createOrder } from "../api/order";
+import { isAuthenticated } from "../utils/auth";
+import { useNavigate } from "react-router-dom";
 
 // --- Context setup ---
 const CartContext = createContext();
@@ -12,6 +14,7 @@ export const CartProvider = ({ children }) => {
     return stored ? JSON.parse(stored) : [];
   });
 
+  const navigate = useNavigate();
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -25,6 +28,7 @@ export const CartProvider = ({ children }) => {
   }, [cart]);
 
   const addToCart = (product) => {
+    if (!isAuthenticated()) navigate("/login");
     setCart((prev) => {
       const existing = prev.find((p) => p.id === product.id);
       if (existing) {

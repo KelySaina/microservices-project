@@ -73,7 +73,7 @@ Vagrant.configure("2") do |config|
       w.vm.hostname = worker
       w.vm.network "private_network", ip: nodes[worker]
       w.vm.provider "virtualbox" do |vb|
-        vb.memory = 1024
+        vb.memory = 1536
         vb.cpus = 1
       end
       w.vm.provision "shell", inline: provision_node(nodes[worker], worker, false, nodes)

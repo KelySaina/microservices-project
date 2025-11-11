@@ -131,7 +131,7 @@ export default function ProductManager() {
               <input type="number" placeholder="Stock" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} className="border px-3 py-2 rounded w-full" required />
               <div className="flex justify-end space-x-2 mt-4">
                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">{editing ? "Update" : "Add"}</button>
+                <button type="submit" data-cy="submit-button" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">{editing ? "Update" : "Add"}</button>
               </div>
             </form>
           </div>
