@@ -113,7 +113,7 @@ jobs:
 
             # Wait for container startup
             echo "⏳ Waiting for $service to start..."
-            sleep 10
+            sleep 30
 
             # Check container health status if defined in Dockerfile
             HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null || echo "none")
