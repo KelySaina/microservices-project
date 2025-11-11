@@ -4,7 +4,11 @@ import schema from "./schema.js";
 import dotenv from "dotenv";
 import cors from "cors";
 
-dotenv.config();
+const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+dotenv.config({ path: envFile });
+
+console.log(`Using env file: ${envFile}`);
+
 
 const app = express();
 

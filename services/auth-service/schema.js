@@ -23,7 +23,12 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "./db.js";
 import dotenv from "dotenv";
-dotenv.config();
+import dotenv from 'dotenv';
+
+const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+dotenv.config({ path: envFile });
+
+console.log(`Using env file: ${envFile}`);
 
 // User type
 const UserType = new GraphQLObjectType({
