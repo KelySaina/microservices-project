@@ -92,16 +92,17 @@ jobs:
 
       - name: Start DB + services for testing
         run: |
-          docker compose -f svc-db/docker-compose.test.yml up -d
+          docker compose -f svc-db/docker-compose.yml up -d
 
       - name: Validate GraphQL health
         run: |
+          # Map each service to its host port
           declare -A PORTS=( ["auth-service"]=4001 ["order-service"]=4002 ["product-service"]=4003 )
 
-          for service in ${{ needs.build.outputs.changed_services }}; do
-            echo "🧪 Checking GraphQL health for $service (container port: ${PORTS[$service]}, host port: ${PORTS[$service]})"
+          for service in auth-service order-service product-service; do
+            echo "🧪 Checking GraphQL health for $service (host port: ${PORTS[$service]})"
 
-            MAX_WAIT=15
+            MAX_WAIT=60
             INTERVAL=5
             ELAPSED=0
             RESPONSE=""
@@ -123,28 +124,29 @@ jobs:
 
             if [ "$RESPONSE" != "ok" ]; then
               echo "❌ $service failed health check"
-              docker logs "$service-test"
-              docker compose -f svc-db/docker-compose.test.yml down
+              docker logs "${service}-test"
+              docker compose -f svc-db/docker-compose.yml down
               exit 1
             fi
           done
 
       - name: Run unit tests inside containers
         run: |
-          for service in ${{ needs.build.outputs.changed_services }}; do
+          for service in auth-service order-service product-service; do
             echo "🧩 Running unit tests for $service"
             case "$service" in
               auth-service|order-service)
-                docker exec "$service-test" npm test || exit 1
+                docker exec "${service}-test" npm test || exit 1
                 ;;
               product-service)
-                docker exec "$service-test" pytest tests/ || exit 1
+                docker exec "${service}-test" pytest tests/ || exit 1
                 ;;
             esac
           done
 
       - name: Stop test containers
-        run: docker compose -f svc-db/docker-compose.test.yml down
+        run: docker compose -f svc-db/docker-compose.yml down
+
 
 
 
