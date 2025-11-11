@@ -101,21 +101,38 @@ jobs:
       - name: Start test database
         run: |
           docker compose -f svc-db/docker-compose.yml up -d
-        env:
-          VERSION: ${{ needs.build.outputs.version }}
 
       - name: Validate GraphQL health
         run: |
+          # Map each service to its internal GraphQL port
+          declare -A PORTS=(
+            ["auth-service"]=4001
+            ["order-service"]=4002
+            ["product-service"]=4003
+          )
+
           for service in ${{ needs.build.outputs.changed_services }}; do
-            echo "🧪 Checking GraphQL health for $service"
+            CONTAINER="$service-test"
+            INTERNAL_PORT=${PORTS[$service]}
+
+            # Get host-mapped port
+            HOST_PORT=$(docker port "$CONTAINER" $INTERNAL_PORT/tcp | cut -d: -f2 || echo "")
+            if [ -z "$HOST_PORT" ]; then
+              echo "❌ Could not find host port for $service (container port $INTERNAL_PORT)"
+              docker logs "$CONTAINER"
+              docker stop "$CONTAINER"
+              exit 1
+            fi
+
+            echo "🧪 Checking GraphQL health for $service (container port: $INTERNAL_PORT, host port: $HOST_PORT)"
 
             MAX_WAIT=60
             INTERVAL=5
             ELAPSED=0
-            PORT=$(docker port "$service-test" 4000/tcp | cut -d: -f2)
+            RESPONSE=""
 
             while [ $ELAPSED -lt $MAX_WAIT ]; do
-              RESPONSE=$(curl -s -X POST "http://localhost:$PORT/graphql" \
+              RESPONSE=$(curl -s -X POST "http://localhost:$HOST_PORT/graphql" \
                 -H "Content-Type: application/json" \
                 -d '{"query":"{ healthz }"}' | jq -r '.data.healthz' 2>/dev/null || echo "")
 
@@ -131,11 +148,12 @@ jobs:
 
             if [ "$RESPONSE" != "ok" ]; then
               echo "❌ $service failed health check"
-              docker logs "$service-test"
-              docker stop "$service-test"
+              docker logs "$CONTAINER"
+              docker stop "$CONTAINER"
               exit 1
             fi
           done
+
 
       - name: Tear down test environment
         run: |
