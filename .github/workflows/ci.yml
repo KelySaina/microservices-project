@@ -274,8 +274,6 @@ jobs:
   cypress:
     runs-on: self-hosted
     needs: deploy
-    env:
-      BASE_URL: http://localhost:5173
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -298,7 +296,7 @@ jobs:
         working-directory: ./tests
 
       - name: Run Cypress tests
-        run: npx cypress run --config baseUrl=$BASE_URL
+        run: BASE_URL=http://localhost:5173 npx cypress run --config baseUrl=$BASE_URL
         working-directory: ./tests
 
       - name: Upload Cypress artifacts

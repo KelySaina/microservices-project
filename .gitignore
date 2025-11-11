@@ -2,6 +2,8 @@
 # Node modules
 node_modules/
 
+screenshots/
+
 # Lock files
 package-lock.json
 yarn.lock
