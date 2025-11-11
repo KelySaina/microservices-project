@@ -23,7 +23,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "./db.js";
 import dotenv from "dotenv";
-import dotenv from 'dotenv';
 
 const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
 dotenv.config({ path: envFile });
