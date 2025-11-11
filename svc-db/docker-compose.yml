@@ -20,6 +20,7 @@ services:
   # Example: auth-service (repeat similarly for other services)
   auth-service:
     image: ghcr.io/kelysaina/auth-service:latest
+    container_name: auth-service-test
     environment:
       NODE_ENV: test
       DB_HOST: db
@@ -36,6 +37,7 @@ services:
 
   order-service:
     image: ghcr.io/kelysaina/order-service:latest
+    container_name: order-service-test
     environment:
       NODE_ENV: test
       DB_HOST: db
@@ -52,6 +54,7 @@ services:
 
   product-service:
     image: ghcr.io/kelysaina/product-service:latest
+    container_name: product-service-test
     environment:
       NODE_ENV: test
       DB_HOST: db
