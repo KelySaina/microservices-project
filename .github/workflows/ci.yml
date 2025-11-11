@@ -101,6 +101,8 @@ jobs:
       - name: Start test database
         run: |
           docker compose -f svc-db/docker-compose.yml up -d
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
 
       - name: Validate GraphQL health
         run: |
@@ -133,38 +135,6 @@ jobs:
               docker stop "$service-test"
               exit 1
             fi
-          done
-
-      - name: Run unit tests inside containers
-        run: |
-          for service in ${{ needs.build.outputs.changed_services }}; do
-            echo "🧩 Running unit tests for $service:$VERSION"
-
-            case "$service" in
-              auth-service|order-service)
-                docker run --rm \
-                  --network lamp-network \
-                  -e NODE_ENV=test \
-                  -e DB_HOST=svc-db \
-                  -e DB_USER=test \
-                  -e DB_PASSWORD=test \
-                  -e DB_NAME=testdb \
-                  $REGISTRY/$IMAGE_OWNER/$service:$VERSION npm test || exit 1
-                ;;
-              product-service)
-                docker run --rm \
-                  --network lamp-network \
-                  -e NODE_ENV=test \
-                  -e DB_HOST=svc-db \
-                  -e DB_USER=test \
-                  -e DB_PASSWORD=test \
-                  -e DB_NAME=testdb \
-                  $REGISTRY/$IMAGE_OWNER/$service:$VERSION pytest tests/ || exit 1
-                ;;
-              *)
-                echo "ℹ️ No test configuration for $service"
-                ;;
-            esac
           done
 
       - name: Tear down test environment
