@@ -6,8 +6,6 @@ import cors from "cors";
 
 dotenv.config();
 
-console.log(`Using env file: ${envFile}`);
-
 
 const app = express();
 

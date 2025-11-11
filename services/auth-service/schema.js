@@ -26,8 +26,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-console.log(`Using env file: ${envFile}`);
-
 // User type
 const UserType = new GraphQLObjectType({
   name: "User",
