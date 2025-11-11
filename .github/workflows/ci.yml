@@ -90,36 +90,51 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Start DB + services for testing
+      - name: Pull built images
         run: |
-          docker compose -f svc-db/docker-compose.yml up -d
+          for service in ${{ needs.build.outputs.changed_services }}; do
+            echo "Pulling image for $service:$VERSION"
+            docker pull $REGISTRY/$IMAGE_OWNER/$service:$VERSION
+          done
 
       - name: Validate built images
         run: |
           for service in ${{ needs.build.outputs.changed_services }}; do
-            echo "🧪 Testing $service:$VERSION"
+            echo "🚀 Testing container startup for $service:$VERSION"
 
-            CONTAINER_ID=$(docker run -d --rm $REGISTRY/$IMAGE_OWNER/$service:$VERSION)
+            CONTAINER_ID=$(docker run -d $REGISTRY/$IMAGE_OWNER/$service:$VERSION || true)
+
             if [ -z "$CONTAINER_ID" ]; then
-              echo "❌ Failed to start $service"
+              echo "❌ Failed to start $service container"
               exit 1
             fi
 
-            echo "⏳ Waiting 10s for $service to initialize..."
+            # Give it a few seconds to spin up
             sleep 10
 
-            # Optional health check
-            HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null || echo "none")
-            echo "Health status: $HEALTH_STATUS"
-
-            PORT=$(docker port "$CONTAINER_ID" | head -n1 | cut -d: -f2)
-            if [ "$PORT" ]; then
-              curl -s "http://localhost:$PORT" >/dev/null && echo "✅ $service responds on port $PORT"
+            # Check if the container is still running
+            STATUS=$(docker inspect --format '{{.State.Status}}' $CONTAINER_ID)
+            if [ "$STATUS" != "running" ]; then
+              echo "❌ $service container exited immediately with status: $STATUS"
+              docker logs $CONTAINER_ID
+              docker rm -f $CONTAINER_ID
+              exit 1
             fi
 
-            docker logs --tail 20 "$CONTAINER_ID"
-            docker stop "$CONTAINER_ID"
-            echo "--------------------------------------"
+            # Optional: HTTP probe if service exposes a port
+            PORT=$(docker port $CONTAINER_ID | head -n1 | cut -d: -f2)
+            if [ -n "$PORT" ]; then
+              RESPONSE=$(docker exec $CONTAINER_ID curl -s -o /dev/null -w "%{http_code}" "http://localhost:$PORT/graphql" || echo "")
+              if [[ "$RESPONSE" =~ ^2|3$ ]]; then
+                echo "✅ $service responds on port $PORT (HTTP $RESPONSE)"
+              else
+                echo "⚠️ $service did not respond properly on port $PORT"
+              fi
+            fi
+
+            docker logs $CONTAINER_ID
+            docker rm -f $CONTAINER_ID
+            echo "---------------------------------------------"
           done
 
   deploy:

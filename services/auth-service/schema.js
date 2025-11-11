@@ -24,8 +24,7 @@ import jwt from "jsonwebtoken";
 import pool from "./db.js";
 import dotenv from "dotenv";
 
-const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
-dotenv.config({ path: envFile });
+dotenv.config();
 
 console.log(`Using env file: ${envFile}`);
 
@@ -74,7 +73,7 @@ const RootQuery = new GraphQLObjectType({
     healthz: {
       type: GraphQLString,
       resolve: () =>
-        `Auth Service is healthy!!! ${BUILD_DATE} #${VERSION}`,
+        `Auth Service is healthy!! ${BUILD_DATE} #${VERSION}`,
     },
   },
 });
