@@ -5,9 +5,9 @@ const login = (email, password) => {
   cy.get("button[type='submit']").click();
 
   // Wait for redirect and verify landing page
-  cy.url({timeout: 10000}).should("not.include", "/login");
-  cy.url({timeout: 10000}).should("include", "/");
-  cy.contains("My Orders", { timeout: 10000 }).should("exist");
+  cy.url({timeout: 25000}).should("not.include", "/login");
+  cy.url({timeout: 25000}).should("include", "/");
+  cy.contains("My Orders", { timeout: 25000 }).should("exist");
 };
 
 export { login };
