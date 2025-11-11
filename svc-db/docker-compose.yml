@@ -19,7 +19,7 @@ services:
 
   # Example: auth-service (repeat similarly for other services)
   auth-service:
-    image: ghcr.io/kelysaina/auth-service:${VERSION}
+    image: ghcr.io/kelysaina/auth-service:${VERSION} || ghcr.io/kelysaina/auth-service:latest
     environment:
       NODE_ENV: test
       DB_HOST: db
@@ -35,7 +35,7 @@ services:
       - lamp-network
 
   order-service:
-    image: ghcr.io/kelysaina/order-service:${VERSION}
+    image: ghcr.io/kelysaina/order-service:${VERSION} || ghcr.io/kelysaina/order-service:latest
     environment:
       NODE_ENV: test
       DB_HOST: db
@@ -51,7 +51,7 @@ services:
       - lamp-network
 
   product-service:
-    image: ghcr.io/kelysaina/product-service:${VERSION}
+    image: ghcr.io/kelysaina/product-service:${VERSION} || ghcr.io/kelysaina/product-service:latest
     environment:
       NODE_ENV: test
       DB_HOST: db
