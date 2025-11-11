@@ -283,15 +283,15 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '20' # Cypress 15+ needs Node 18+
 
-      - name: Install Cypress dependencies
-        run: |
-          sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
-
-      - name: Install project dependencies
+      - name: Install frontend dependencies
         run: npm install
         working-directory: ./frontend
+
+      - name: Install Cypress in tests folder
+        run: npm install cypress --save-dev
+        working-directory: ./tests
 
       - name: Run Cypress tests
         run: npx cypress run --config baseUrl=$BASE_URL
