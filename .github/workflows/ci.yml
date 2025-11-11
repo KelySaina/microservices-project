@@ -115,9 +115,8 @@ jobs:
             echo "⏳ Waiting for $service to start..."
             sleep 10
 
-            # Check container health or HTTP endpoint
+            # Check container health status if defined in Dockerfile
             HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null || echo "none")
-
             if [ "$HEALTH_STATUS" != "healthy" ] && [ "$HEALTH_STATUS" != "none" ]; then
               echo "❌ $service image is unhealthy ($HEALTH_STATUS)"
               docker logs "$CONTAINER_ID"
@@ -125,17 +124,28 @@ jobs:
               exit 1
             fi
 
-            # Optional: basic HTTP probe
+            # Determine mapped port dynamically
             PORT=$(docker port "$CONTAINER_ID" | head -n1 | cut -d: -f2)
-            if curl -s "http://localhost:$PORT" >/dev/null; then
-              echo "✅ $service responded successfully on port $PORT"
+
+            echo "🔍 Checking GraphQL healthz for $service on port $PORT..."
+            RESPONSE=$(curl -s -X POST "http://localhost:$PORT/graphql" \
+              -H "Content-Type: application/json" \
+              -d '{"query":"{ healthz }"}' | jq -r '.data.healthz' 2>/dev/null || echo "")
+
+            if [ "$RESPONSE" == "ok" ]; then
+              echo "✅ $service GraphQL health check passed"
             else
-              echo "⚠️ $service did not respond on port $PORT"
+              echo "❌ $service GraphQL health check failed"
+              docker logs "$CONTAINER_ID"
+              docker stop "$CONTAINER_ID"
+              exit 1
             fi
 
             docker logs "$CONTAINER_ID"
             docker stop "$CONTAINER_ID"
+            echo "---------------------------------------------"
           done
+
 
       - name: Run unit tests inside containers
         run: |
