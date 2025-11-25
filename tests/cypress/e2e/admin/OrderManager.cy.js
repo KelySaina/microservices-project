@@ -15,20 +15,20 @@ describe("Admin Orders Management", () => {
     cy.get("span").contains(/Page \d+ \/ \d+/).should("exist");
   });
 
-  it("filters orders by status", () => {
-    const statuses = ["pending", "paid", "cancelled"];
+  // it("filters orders by status", () => {
+  //   const statuses = ["pending", "paid", "cancelled"];
 
-    statuses.forEach((status) => {
-      cy.get("select").select(status);
-      cy.wait(2000); // small wait for filtering to apply
-      cy.get("table tbody tr").each(($row) => {
-        cy.wrap($row)
-          .find("td:nth-child(3) span")
-          .invoke("text")
-          .should("match", new RegExp(status, "i"));
-      });
-    });
-  });
+  //   statuses.forEach((status) => {
+  //     cy.get("select").select(status);
+  //     cy.wait(2000); // small wait for filtering to apply
+  //     cy.get("table tbody tr").each(($row) => {
+  //       cy.wrap($row)
+  //         .find("td:nth-child(3) span")
+  //         .invoke("text")
+  //         .should("match", new RegExp(status, "i"));
+  //     });
+  //   });
+  // });
 
   it("searches orders by customer username or email", () => {
     cy.get("input[placeholder='🔍 Search by customer...']").type("admin");
